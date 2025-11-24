@@ -55,7 +55,12 @@ public class StepDefinitions {
     public void kullanici_samplesale_uzerinden_merchant_menuye_giris_yapar() {
         ReusableMethods.swipeUp();
 
-        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(salePage.lstMenuAc)).click();
+        //ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(salePage.lstMenuAc)).click();
+        new WebDriverWait(driver, Duration.ofSeconds(2))
+                .until(ExpectedConditions.visibilityOfElementLocated(
+                        AppiumBy.id("com.pax.samplesalea:id/menuSpinner")
+                ))
+                .click();
         salePage.itmMerchantMenu.click();
         salePage.btnMenuAc.click();
 
@@ -65,9 +70,11 @@ public class StepDefinitions {
 
     @And("kullanici isyeri menuden parametre secimi yapar")
     public void kullanici_islem_menuden_parametre_secimi_yapar() {
-        ReusableMethods.iwait().until(
-                ExpectedConditions.elementToBeClickable(techPos.btnParametre)
-        ).click();
+     //   ReusableMethods.iwait().until(ExpectedConditions.elementToBeClickable(techPos.btnParametre)).click();
+
+        ReusableMethods.iwait()
+                .until(ExpectedConditions.elementToBeClickable(techPos.btnParametre))
+                .click();
     }
 
 
@@ -91,7 +98,7 @@ public class StepDefinitions {
                 return;
             }
 
-            Thread.sleep(300);
+          //  Thread.sleep(300);
         }
 
         System.out.println("❌ 120 sn boyunca beklenen ekran gelmedi → kapatmıyoruz!");
@@ -100,10 +107,9 @@ public class StepDefinitions {
 
     @Then("kullanici techpos sifresi girer")
     public void kullanici_techpos_sifresi_girer() {
-        ReusableMethods.switchToApp("com.pax.techpos");
-        ReusableMethods.driverWaitForApp();
 
-        ReusableMethods.techPosPage.txtTechposAmountText.clear();
+
+         ReusableMethods.techPosPage.txtTechposAmountText.clear();
         techPos.txtTechposAmountText.sendKeys("0000");
         techPos.btnTechposGiris.click();
 
@@ -185,7 +191,7 @@ public class StepDefinitions {
     public void kullanici_techpos_secimi_yapar() {
 
         try {
-            WebDriverWait fastWait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            WebDriverWait fastWait = new WebDriverWait(driver, Duration.ofSeconds(1));
             WebElement techPosButton = fastWait.until(
                     ExpectedConditions.visibilityOfElementLocated(
                             AppiumBy.xpath("//*[@text='TechPOS']")

@@ -15,7 +15,7 @@ import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
 )
 @ConfigurationParameter(
         key = FILTER_TAGS_PROPERTY_NAME,
-        value = "@run"
+        value = "@runn"
 )
 @ConfigurationParameter(
         key= Constants.EXECUTION_DRY_RUN_PROPERTY_NAME,

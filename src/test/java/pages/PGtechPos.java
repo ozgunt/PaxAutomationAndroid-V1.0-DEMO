@@ -138,7 +138,7 @@ public class PGtechPos {
     @AndroidFindBy(xpath = "//*[@resource-id='com.pax.techpos:id/header' and @text='SERİ NUMARASI GİRİNİZ']")
     public WebElement lblSeriNumarasiGiriniz;
 
-    @AndroidFindBy(xpath = "//android.widget.TextView[@text=\"İŞYERİ MENÜSÜ\"]")
+    @AndroidFindBy(uiAutomator = "new UiSelector().text(\"İŞYERİ MENÜSÜ\")")
     public WebElement lblIsyeriMenu;
 
     @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/tv_title\"]")

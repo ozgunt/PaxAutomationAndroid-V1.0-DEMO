@@ -41,6 +41,9 @@ public class ReusableMethods {
 
     public static void setUp() throws Exception {
 
+
+
+
         // ✅ Aktif cihaz bilgilerini al
         Device device = DeviceManager.getActiveDevice();
 
@@ -71,6 +74,10 @@ public class ReusableMethods {
         caps.setCapability("automationName", device.getAutomationName());
         caps.setCapability("deviceName", device.getName());
         caps.setCapability("udid", device.getUdid());
+        caps.setCapability("disableWindowAnimation", true);
+
+
+
 
         // ✅ HIZLI AÇILIŞ
         if (appPackage != null && !appPackage.isEmpty()) {
@@ -97,6 +104,10 @@ public class ReusableMethods {
         // ✅ Driver Başlat
         driver = new AndroidDriver(new URL(serverUrl), caps);
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+
+        driver.setSetting("waitForIdleTimeout", 0);
+        driver.setSetting("waitForSelectorTimeout", 0);
+        driver.setSetting("actionAcknowledgmentTimeout", 0);
 
         sampleSalePage  = new PGsampleSale(driver);
         managerPage = new PGmanager(driver);
@@ -130,33 +141,30 @@ public class ReusableMethods {
 
 
     public static void swipeUp() {
-        Dimension size = driver.manage().window().getSize();
-        int startX = size.width / 2;
-        int startY = (int) (size.height * 0.80);
-        int endY = (int) (size.height * 0.30);
-
-        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
-        Sequence swipe = new Sequence(finger, 1);
-
-        // 1️⃣ Kaydırma başlat
-        swipe.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX, startY));
-        swipe.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()));
-
-        // 2️⃣ Smooth hareket (800 ms çok yavaşsa 500 ms de kullanabilirsin)
-        swipe.addAction(finger.createPointerMove(Duration.ofMillis(600), PointerInput.Origin.viewport(), startX, endY));
-        swipe.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
-
-        driver.perform(Collections.singletonList(swipe));
-
-        // 3️⃣ Stabilizasyon beklemesi — UI tamamen sakinleşsin
         try {
-            Thread.sleep(500); // 0.5 sn kısa ama etkili, global stabilizasyon
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+            Dimension size = driver.manage().window().getSize();
+            int startX = size.width / 2;
+            int startY = (int) (size.height * 0.80);
+            int endY   = (int) (size.height * 0.20);
 
-        System.out.println("📱 swipeUp tamamlandı (stabil).");
+            PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+            Sequence swipe = new Sequence(finger, 1);
+
+            swipe.addAction(finger.createPointerMove(Duration.ZERO,
+                    PointerInput.Origin.viewport(), startX, startY));
+            swipe.addAction(finger.createPointerDown(0));
+            swipe.addAction(finger.createPointerMove(Duration.ofMillis(600),
+                    PointerInput.Origin.viewport(), startX, endY));
+            swipe.addAction(finger.createPointerUp(0));
+
+            driver.perform(Collections.singletonList(swipe));
+
+            System.out.println("📱 swipeUp OK (pointer)");
+        } catch (Exception e) {
+            System.out.println("❌ swipeUp pointer hata: " + e.getMessage());
+        }
     }
+
 
 
     public static void switchToApp(String expectedPackage) {

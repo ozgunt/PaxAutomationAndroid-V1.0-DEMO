@@ -29,7 +29,7 @@ Feature: US1001 kullanici samplesale uzerinden kurulum parametre günsonu yapar
     And kullanici isyeri menuden parametre secimi yapar
     And Kullanici cihazi kendi serisine kurar
     Then ekran kontrolu sonrasi uygulama kapanir
-@wip
+@runn
   Scenario: TC902 kullanici parametre alir
     Given kullanici sample sale baslatir
     When kullanici samplesale uzerinden merchant menuye giris yapar
