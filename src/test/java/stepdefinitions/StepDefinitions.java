@@ -27,6 +27,10 @@ import static utilities.ReusableMethods.*;
 
 public class StepDefinitions {
 
+
+    public StepDefinitions() {
+    }
+
     PGsampleSale salePage;
     PGmanager manager;
     PGtechPos techPos;
@@ -35,9 +39,16 @@ public class StepDefinitions {
     @Given("kullanici sample sale baslatir")
     public void kullanici_sample_sale_baslatir() throws Exception {
         setUp();
-        initPages();
+        salePage = ReusableMethods.sampleSalePage;
+        manager  = ReusableMethods.managerPage;
+        techPos  = ReusableMethods.techPosPage;
+
 
         System.out.println("✅ Sample Sale baslatildi!");
+
+        salePage = sampleSalePage;
+        manager  = managerPage;
+        techPos  = techPosPage;
     }
 
     @When("kullanici samplesale uzerinden merchant menuye giris yapar")

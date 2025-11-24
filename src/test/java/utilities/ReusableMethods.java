@@ -39,16 +39,10 @@ public class ReusableMethods {
     public static PGmanager managerPage;
     public static PGtechPos techPosPage;
 
-
-
-
     public static void setUp() throws Exception {
-
-
 
         // ✅ Aktif cihaz bilgilerini al
         Device device = DeviceManager.getActiveDevice();
-
 
 
         if (device == null) {
@@ -294,9 +288,6 @@ public class ReusableMethods {
 
 
 
-
-
-
     public static void assertElementVisible(String name, WebElement element) {
         try {
             iwait().until(ExpectedConditions.refreshed(ExpectedConditions.visibilityOf(element)));
@@ -307,13 +298,6 @@ public class ReusableMethods {
         }
     }
 
-    public static void  initPages (){
-
-        sampleSalePage = new PGsampleSale(driver);
-        managerPage = new PGmanager(driver);
-        techPosPage = new PGtechPos(driver);
-
-    }
 }
 
 
