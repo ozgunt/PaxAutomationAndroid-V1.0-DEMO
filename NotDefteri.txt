@@ -1,0 +1,44 @@
+
+ 2 aşamalı kontrol
+ for (int i = 0; i < 2; i++) {
+
+ }
+            try {
+                if (salePage.lblSlip.isDisplayed()) {
+                    salePage.lblSlip.click();
+                    System.out.println("📄 Slip ekranı tıklandı (" + (i + 1) + ". kez)");
+                    Thread.sleep(300);
+                } else {
+                    System.out.println("ℹ️ Slip ekranı " + (i + 1) + ". kez görünmedi → devam ediliyor");
+                    break;
+                }
+            } catch (org.openqa.selenium.NoSuchElementException e) {
+                System.out.println("ℹ️ Slip elementi bulunamadı → devam ediliyor");
+                break;
+            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                System.out.println("⚠️ Slip elementi stale oldu → yeniden kontrol ediliyor...");
+                Thread.sleep(200);
+            } catch (Exception e) {
+                System.out.println("⚠️ Slip kontrolünde hata: " + e.getMessage());
+                break;
+            }
+
+
+
+
+
+    }
+
+
+
+        public boolean isSeriNoEslesmediMessageDisplayed() {
+            try {
+                if (lblSeriNoEslesmedi == null) return false;
+                if (!lblSeriNoEslesmedi.isDisplayed()) return false;
+
+                String actualText = lblSeriNoEslesmedi.getText().toLowerCase();
+                return actualText.contains("seri") && actualText.contains("eşleşmedi");
+
+            } catch (StaleElementReferenceException | NoSuchElementException e) {
+                return false;
+            }

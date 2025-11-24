@@ -1,0 +1,38 @@
+{
+  "platformName": "Android",
+  "appium:deviceName": "PaxA910",
+  "appium:automationName": "UiAutomator2",
+  "appium:appPackage": "com.pax.samplesalea",
+  "appium:appActivity": "com.pax.samplesalea.SaleActivity",
+  "appium:noReset": true
+}
+
+
+
+
+
+
+
+
+
+{
+  "platformName": "Android",
+  "appium:deviceName": "PaxA910",
+  "appium:platformVersion": "6.0",
+  "appium:automationName": "UiAutomator2",
+  "appium:app": "C:\\Users\\ozgun.tufenkci\\Desktop\\WorkSpace\\AndroidTestAutomationPax\\src\\test\\java\\APK\\Samplesale.apk",
+  "appium:appPackage": "com.pax.samplesalea",
+  "appium:appActivity": "com.pax.samplesalea.SaleActivity",
+  "appium:noReset": true
+}
+
+
+{
+  "platformName": "Android",
+  "appium:deviceName": "PaxA910",
+  "appium:platformVersion": "6.0",
+  "appium:automationName": "UiAutomator2",
+  "appium:appPackage": "com.pax.techpos",
+  "appium:appActivity": ".StarterActivity",
+  "appium:noReset": true
+}
