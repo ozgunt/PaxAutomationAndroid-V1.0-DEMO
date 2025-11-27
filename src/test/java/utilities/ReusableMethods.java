@@ -33,7 +33,8 @@ import java.util.regex.Pattern;
 
 
 public class ReusableMethods {
-
+    public static Process logcatProcess;
+    public static String currentLogFilePath;
     public static AndroidDriver driver;
     public static PGsampleSale sampleSalePage;
     public static PGmanager managerPage;
@@ -305,6 +306,9 @@ public class ReusableMethods {
             Assertions.fail(name + " görünmedi!");
         }
     }
+
+
+
 
 }
 

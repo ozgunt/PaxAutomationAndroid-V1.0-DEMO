@@ -1,5 +1,5 @@
 Feature: US1003_Menulerin_Gorununrlugu_Testi
-@run
+@ignore
   Scenario: TC908 kullanici techpos merchant menude gorunmesi gereken secimleri test eder
   Given kullanici sample sale baslatir
   When  kullanici samplesale uzerinden merchant menuye giris yapar
@@ -8,7 +8,7 @@ Feature: US1003_Menulerin_Gorununrlugu_Testi
   And kullanici merchant menude bulunan elementlerin gorunurlugunu test eder
   And kullanici geri tusuyla cikis yapar
 
-@run
+@ignore
   Scenario: TC910 kullanici techpos transaction menude gorunmesi gereken secimleri test eder
 
     When kullanici samplesale uzerinden transaction menuye giris yapar

@@ -3,10 +3,10 @@ package hooks;
 import io.cucumber.java.*;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import utilities.LoggerUtil;
 import utilities.ScreenshotUtil;
 import utilities.ReusableMethods;
+import utilities.LogcatUtility;
 
 import java.time.Duration;
 
@@ -27,10 +27,17 @@ public class TestHooks {
         logger.info("=== TEST SUITE BİTTİ ===");
     }
 
+    // ============================================================
+    //   🚀 SADECE 1 ADET beforeScenario — Logcat buraya eklendi
+    // ============================================================
     @Before
-    public void beforeScenario(Scenario scenario) {
+    public void beforeScenario(Scenario scenario) throws Exception {
+
         ThreadContext.put("scenario", "[" + scenario.getName() + "]");
         logger.info("Senaryo başladı: {}", scenario.getName());
+
+        // 🔥 FULL LOGCAT BAŞLAT
+        LogcatUtility.startLogcat(scenario.getName());
     }
 
     @AfterStep
@@ -45,6 +52,7 @@ public class TestHooks {
 
     @After
     public void afterScenario(Scenario scenario) {
+
         if (scenario.isFailed()) {
             logger.error("❌ Senaryo FAIL → {}", scenario.getName());
             if (driver != null) {
@@ -54,11 +62,11 @@ public class TestHooks {
             logger.info("✅ Senaryo PASS → {}", scenario.getName());
         }
 
+        // 🔥 FULL LOGCAT DURDUR
+        LogcatUtility.stopLogcat();
+
         ThreadContext.clearAll();
-        try {
-            Thread.sleep(Duration.ofMillis(200).toMillis());
-        } catch (Exception ignored) {
-        }
+        try { Thread.sleep(200); } catch (Exception ignored) {}
     }
 
     @org.junit.jupiter.api.AfterAll
@@ -73,30 +81,20 @@ public class TestHooks {
             takeScreenshot(scenario.getName());
             System.out.println("⚠️ Step fail oldu ama UYGULAMA KAPANMIYOR!");
         }
-
-
     }
 
     @BeforeStep
     public void beforeEachStep() throws InterruptedException {
 
-        // 1) Driver yoksa step atlanır (patlamasın)
         if (ReusableMethods.driver == null) {
             System.out.println("⚠️ Driver null, step atlanıyor!");
             return;
         }
 
-        // 2) Sadece bilgi amaçlı package logla — AMA HİÇ MÜDAHALE ETME
         System.out.println("🔍 [BeforeStep] Aktif Package: " + ReusableMethods.driver.getCurrentPackage());
 
-        // 3) UI snapshot tazele (hata verirse yut)
-        try {
-            ReusableMethods.driver.getPageSource();
-        } catch (Exception ignore) {
-        }
+        try { ReusableMethods.driver.getPageSource(); } catch (Exception ignore) {}
 
-        // 4) Kısa nefes — stall/donma riskini azaltır
         Thread.sleep(300);
     }
 }
-
