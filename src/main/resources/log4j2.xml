@@ -15,7 +15,12 @@
             <DefaultRolloverStrategy max="14"/>
         </RollingFile>
     </Appenders>
+
     <Loggers>
+        <!-- 🔇 Appium & Selenium loglarını kapat -->
+        <Logger name="io.appium" level="off" additivity="false"/>
+        <Logger name="org.openqa.selenium" level="off" additivity="false"/>
+
         <Root level="info">
             <AppenderRef ref="ConsoleAppender"/>
             <AppenderRef ref="FileAppender"/>

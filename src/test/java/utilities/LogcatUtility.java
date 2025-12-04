@@ -5,134 +5,83 @@ import java.io.*;
 public class LogcatUtility {
 
     private static Process logcatProcess;
-    private static String currentLogFilePath;
+    private static String currentRawLogPath;
 
-    // ============================================================
-    //  LOGCAT BAŞLAT (PID Tagging + Full Real Log)
-    // ============================================================
-    public static void startLogcat(String testName) throws Exception {
+    /**
+     * Şu anki RAW log dosyasının yolu (null olabilir)
+     */
+    public static String getCurrentRawLogPath() {
+        return currentRawLogPath;
+    }
 
-        String logDir = "logs";
+    /**
+     * Senaryo bazlı RAW log başlat
+     * Örnek komut:
+     *   adb logcat -b all -v threadtime
+     */
+    public static void startLogcat(String scenarioName) throws Exception {
+
+        // Her ihtimale karşı eski process'i kapat
+        stopIfRunning();
+
+        String logDir = "logs/raw";
         File dir = new File(logDir);
-        if (!dir.exists()) dir.mkdirs();
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
 
-        currentLogFilePath = logDir + "/" + testName + "_" + System.currentTimeMillis() + ".txt";
+        String safeName = scenarioName.replaceAll("[^a-zA-Z0-9._-]", "_");
+        currentRawLogPath = logDir + "/" + safeName + "_" + System.currentTimeMillis() + ".log";
 
-        // ---- PID GATHER ----
-        String techPosPid    = getPid("com.pax.techpos");
-        String sampleSalePid = getPid("com.pax.samplesalea");
-        String mainAppPid    = getPid("com.pax.mainapp");
-
-        System.out.println("📌 PID listesi:");
-        System.out.println("➡ com.pax.techpos     → " + techPosPid);
-        System.out.println("➡ com.pax.samplesalea → " + sampleSalePid);
-        System.out.println("➡ com.pax.mainapp     → " + mainAppPid);
-
-        // ---- LOGCAT PROCESS ----
-        ProcessBuilder pb = new ProcessBuilder("adb", "logcat", "-v", "time");
+        ProcessBuilder pb = new ProcessBuilder(
+                "adb", "logcat",
+                "-b", "all",        // 🔥 Tüm buffer'lar
+                "-v", "threadtime"  // 🔥 Android Studio formatına yakın
+        );
+        pb.redirectErrorStream(true);
         logcatProcess = pb.start();
 
         Thread t = new Thread(() -> {
-            try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(logcatProcess.getInputStream()));
-                 FileWriter fw = new FileWriter(currentLogFilePath))
-            {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(logcatProcess.getInputStream()));
+                 BufferedWriter bw = new BufferedWriter(new FileWriter(currentRawLogPath))) {
+
                 String line;
                 while ((line = br.readLine()) != null) {
-
-                    String prefix = "";
-
-                    // PID’ye göre paket adını otomatik ekle
-                    if (techPosPid != null && line.contains(" " + techPosPid + " "))
-                        prefix = "[com.pax.techpos] ";
-                    else if (sampleSalePid != null && line.contains(" " + sampleSalePid + " "))
-                        prefix = "[com.pax.samplesalea] ";
-                    else if (mainAppPid != null && line.contains(" " + mainAppPid + " "))
-                        prefix = "[com.pax.mainapp] ";
-
-                    fw.write(prefix + line + System.lineSeparator());
+                    // RAW → HİÇBİR FİLTRE YOK
+                    bw.write(line);
+                    bw.newLine();
                 }
-
-            } catch (Exception e) {
-                System.out.println("⚠️ Logcat thread hatası → " + e.getMessage());
+            } catch (IOException ignored) {
             }
         });
+
         t.setDaemon(true);
         t.start();
 
-        System.out.println("📄 Logcat kayıt başladı → " + currentLogFilePath);
+        System.out.println("RAW LOGCAT BAŞLADI → " + currentRawLogPath);
     }
 
-    // ============================================================
-    //  LOGCAT DURDUR
-    // ============================================================
-    public static void stopLogcat() {
-        try {
-            if (logcatProcess != null) {
-                logcatProcess.destroy();
-                System.out.println("🛑 Logcat kayıt durduruldu.");
-            }
-        } catch (Exception e) {
-            System.out.println("⚠️ Logcat durdurulamadı → " + e.getMessage());
+    /**
+     * İçeriden çağırılan yardımcı:
+     * logcat process çalışıyorsa zorla kapat.
+     */
+    private static void stopIfRunning() {
+        if (logcatProcess != null && logcatProcess.isAlive()) {
+            logcatProcess.destroyForcibly();
         }
     }
 
-    // ============================================================
-    //  PAX LOG KLASÖRLERİNİ ÇEK
-    // ============================================================
-    public static void pullPaxLogs(String testName) {
-        try {
-            String outputDir = "logs/pax_" + testName + "_" + System.currentTimeMillis();
-            File dir = new File(outputDir);
-            dir.mkdirs();
-
-            String[] paths = {
-                    "/sdcard/pax/log/",
-                    "/sdcard/Pax/log/",
-                    "/sdcard/log/",
-                    "/data/local/tmp/log/"
-            };
-
-            for (String path : paths) {
-
-                Process p = new ProcessBuilder("adb", "shell", "ls", path).start();
-                int exit = p.waitFor();
-
-                if (exit == 0) {
-                    System.out.println("📁 PAX log klasörü bulundu: " + path);
-
-                    new ProcessBuilder("adb", "pull", path, outputDir)
-                            .start()
-                            .waitFor();
-
-                    System.out.println("📥 PAX logları çekildi → " + outputDir);
-                    return;
-                }
-            }
-
-            System.out.println("ℹ️ Bilinen PAX log klasörleri bulunamadı.");
-
-        } catch (Exception e) {
-            System.out.println("⚠️ PAX logları alınamadı → " + e.getMessage());
-        }
-    }
-
-    // ============================================================
-    //  PID ÇEKME (com.pax.* Uygulamaları için)
-    // ============================================================
-    private static String getPid(String packageName) {
-        try {
-            Process p = new ProcessBuilder("adb", "shell", "pidof", packageName).start();
-            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-            String pid = br.readLine();
-
-            if (pid != null && !pid.trim().isEmpty()) {
-                return pid.trim();
-            }
-
-        } catch (Exception ignored) {}
-
-        return null;
+    /**
+     * RAW logcat'i durdur ve RAW dosya yolunu döndür.
+     * TestHooks içinde:
+     *
+     *   String rawPath = LogcatUtility.stopLogcat();
+     *
+     * diye kullanacaksın.
+     */
+    public static String stopLogcat() {
+        stopIfRunning();
+        System.out.println("RAW LOGCAT DURDU → " + currentRawLogPath);
+        return currentRawLogPath;
     }
 }

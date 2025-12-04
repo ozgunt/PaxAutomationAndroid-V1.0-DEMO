@@ -107,7 +107,41 @@ public class PGtechPos {
 
 
 
+// ofline pin buttonları
 
+    @AndroidFindBy(xpath = "//android.widget.RelativeLayout[@resource-id=\"com.pax.daemon:id/input_pin_parent_panel\"]")
+    public WebElement lblOflinePinEkrani;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_one")
+    public  WebElement btnOflinePinOne;
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_two")
+    public  WebElement btnOflinePinTwo;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_three")
+    public  WebElement btnOflinePinThree;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_four")
+    public  WebElement btnOflinePinFour;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_five")
+    public  WebElement btnOflinePinFive;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_six")
+    public  WebElement btnOflinePinSix;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_seven")
+    public  WebElement btnOflinePinSeven;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_eight")
+    public  WebElement btnOflinePinEight;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_nine")
+    public  WebElement btnOflinePinNine;
+
+    @AndroidFindBy(id = "com.pax.daemon:id/btn_zero")
+    public  WebElement btnOflinePinZero;
+
+    //Online pin buttonları
 
 
     // ----------- TEXTBOX ELEMENTLERİ -----------

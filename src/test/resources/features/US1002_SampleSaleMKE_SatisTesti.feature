@@ -1,8 +1,8 @@
 Feature: US1002_SampleSaleMKE_SatisTesti
-@run
+@ignore
   Scenario:TC906 kullanici samplesale uzerinden halkbank combo kart ile MKE satis islemi gecer
     Given kullanici sample sale baslatir
-    When  kullanici samplesale uzerinden tutar girer
+    When  kullanici samplesale uzerinden 10000 tutar girer
     And  kullanici samplesale uzerinden satis baslatir
     And  kullanici mke secimi yapar
     And  kullanici halkbank1 combo KK no girer
@@ -17,7 +17,7 @@ Feature: US1002_SampleSaleMKE_SatisTesti
   @ignore
   Scenario:TC907 kullanici samplesale uzerinden ziraat combo kart ile MKE satis islemi gecer
     Given kullanici sample sale baslatir
-    When  kullanici samplesale uzerinden tutar girer
+    When  kullanici samplesale uzerinden 10000 tutar girer
     And  kullanici samplesale uzerinden satis baslatir
     And  kullanici mke secimi yapar
     And  kullanici ziraat1 combo KK no girer

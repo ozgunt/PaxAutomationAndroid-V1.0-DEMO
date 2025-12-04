@@ -7,45 +7,48 @@ import utilities.LoggerUtil;
 import utilities.ScreenshotUtil;
 import utilities.ReusableMethods;
 import utilities.LogcatUtility;
-
-import java.time.Duration;
-
-import static utilities.ReusableMethods.driver;
-import static utilities.ReusableMethods.takeScreenshot;
+import utilities.LogFilter;
 
 public class TestHooks {
 
     private static final Logger logger = LoggerUtil.getLogger();
 
+    // Logcat'in sadece 1 kere başlaması için
+    private boolean logcatStarted = false;
+
     @BeforeAll
     public static void beforeAll() {
-        logger.info("=== TEST SUITE BAŞLADI ===");
+        LoggerUtil.getLogger().info("=== TEST SUITE BAŞLADI ===");
     }
 
-    @AfterAll
-    public static void afterAll() {
-        logger.info("=== TEST SUITE BİTTİ ===");
-    }
-
-    // ============================================================
-    //   🚀 SADECE 1 ADET beforeScenario — Logcat buraya eklendi
-    // ============================================================
     @Before
-    public void beforeScenario(Scenario scenario) throws Exception {
-
+    public void beforeScenario(Scenario scenario) {
         ThreadContext.put("scenario", "[" + scenario.getName() + "]");
         logger.info("Senaryo başladı: {}", scenario.getName());
+        logcatStarted = false;  // yeni senaryo için reset
+    }
 
-        // 🔥 FULL LOGCAT BAŞLAT
-        LogcatUtility.startLogcat(scenario.getName());
+    @BeforeStep
+    public void beforeStep(Scenario scenario) {
+
+        // Logcat sadece İLK step'te başlasın
+        if (!logcatStarted) {
+            try {
+                LogcatUtility.startLogcat(scenario.getName());
+                logcatStarted = true;
+                logger.info("🔵 Logcat ilk stepte başlatıldı.");
+            } catch (Exception e) {
+                logger.error("❌ Logcat başlatılamadı", e);
+            }
+        }
     }
 
     @AfterStep
     public void afterStep(Scenario scenario) {
         if (scenario.isFailed()) {
             logger.warn("❌ Adım FAIL oldu → Screenshot alınıyor...");
-            if (driver != null) {
-                ScreenshotUtil.captureAndAttach(driver, scenario);
+            if (ReusableMethods.driver != null) {
+                ScreenshotUtil.captureAndAttach(ReusableMethods.driver, scenario);
             }
         }
     }
@@ -55,46 +58,23 @@ public class TestHooks {
 
         if (scenario.isFailed()) {
             logger.error("❌ Senaryo FAIL → {}", scenario.getName());
-            if (driver != null) {
-                ScreenshotUtil.captureAndAttach(driver, scenario);
-            }
         } else {
             logger.info("✅ Senaryo PASS → {}", scenario.getName());
         }
 
-        // 🔥 FULL LOGCAT DURDUR
-        LogcatUtility.stopLogcat();
+        // RAW logu kapat ve kategorilere ayır
+        String rawPath = LogcatUtility.stopLogcat();
+        try {
+            LogFilter.processRawLog(rawPath, scenario.getName(), scenario.isFailed());
+        } catch (Exception e) {
+            logger.error("LogFilter çalışırken hata oluştu", e);
+        }
 
         ThreadContext.clearAll();
-        try { Thread.sleep(200); } catch (Exception ignored) {}
     }
 
-    @org.junit.jupiter.api.AfterAll
-    public static void tearDown() {
-        System.out.println("✅ Tüm testler bitti → uygulama kapatılıyor");
-        ReusableMethods.quitDriver();
-    }
-
-    @AfterStep
-    public void takeScreenshotAfterFailure(io.cucumber.java.Scenario scenario) {
-        if (scenario.isFailed()) {
-            takeScreenshot(scenario.getName());
-            System.out.println("⚠️ Step fail oldu ama UYGULAMA KAPANMIYOR!");
-        }
-    }
-
-    @BeforeStep
-    public void beforeEachStep() throws InterruptedException {
-
-        if (ReusableMethods.driver == null) {
-            System.out.println("⚠️ Driver null, step atlanıyor!");
-            return;
-        }
-
-        System.out.println("🔍 [BeforeStep] Aktif Package: " + ReusableMethods.driver.getCurrentPackage());
-
-        try { ReusableMethods.driver.getPageSource(); } catch (Exception ignore) {}
-
-        Thread.sleep(300);
+    @AfterAll
+    public static void afterAll() {
+        LoggerUtil.getLogger().info("=== TEST SUITE BİTTİ ===");
     }
 }

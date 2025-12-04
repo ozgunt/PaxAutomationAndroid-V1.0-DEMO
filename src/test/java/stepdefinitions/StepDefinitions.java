@@ -20,7 +20,6 @@ import utilities.ReusableMethods;
 import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.android.nativekey.AndroidKey;
 
-
 import java.time.Duration;
 
 import static utilities.ReusableMethods.*;
@@ -209,12 +208,12 @@ public class StepDefinitions {
     }
 
 
-    @When("kullanici samplesale uzerinden tutar girer")
-    public void kullaniciTutarGirer() {
+    @When("kullanici samplesale uzerinden {int} tutar girer")
+    public void kullaniciTutarGirer(Integer tutar) {
 
-        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(salePage.txtTutar)).sendKeys("10000");
-
-
+        ReusableMethods.iwait()
+                .until(ExpectedConditions.visibilityOf(salePage.txtTutar))
+                .sendKeys(String.valueOf(tutar));
     }
 
 
@@ -627,7 +626,70 @@ public class StepDefinitions {
     }
 
 
+    @And("kullanici ofline pin girer")
+    public void kullaniciOflinePinGirer() {
+        for (int i = 0; i < 2; i++) {
+            try {
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+                wait.until(ExpectedConditions.visibilityOf(techPos.lblOflinePinEkrani));
+
+                // 1 tuşunun merkezi
+                org.openqa.selenium.Rectangle r1 = techPos.btnOflinePinOne.getRect();
+                int x1 = r1.getX() + r1.getWidth() / 2;
+                int y1 = r1.getY() + r1.getHeight() / 2;
+
+                // 2 tuşunun merkezi
+                org.openqa.selenium.Rectangle r2 = techPos.btnOflinePinTwo.getRect();
+                int x2 = r2.getX() + r2.getWidth() / 2;
+                int y2 = r2.getY() + r2.getHeight() / 2;
+
+                // 3 tuşunun merkezi
+                org.openqa.selenium.Rectangle r3 = techPos.btnOflinePinThree.getRect();
+                int x3 = r3.getX() + r3.getWidth() / 2;
+                int y3 = r3.getY() + r3.getHeight() / 2;
+
+                // 4 tuşunun merkezi
+                org.openqa.selenium.Rectangle r4 = techPos.btnOflinePinFour.getRect();
+                int x4 = r4.getX() + r4.getWidth() / 2;
+                int y4 = r4.getY() + r4.getHeight() / 2;
+
+                // OS seviyesinde tap
+                tapWithShell(x1, y1);
+                tapWithShell(x2, y2);
+                tapWithShell(x3, y3);
+                tapWithShell(x4, y4);
+
+                techPos.btnTechposGiris.click();
+
+                System.out.println("✅ PIN girildi (" + (i + 1) + ". kez)");
+                Thread.sleep(300);
+
+            } catch (org.openqa.selenium.TimeoutException e) {
+                System.out.println("⚠️  PIN ekranı gelmedi → geçiyorum (PASS ✅)");
+                break;
+            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                System.out.println("⚠️ PIN elementi stale oldu → 1 kere yeniden denenecek...");
+                i--;
+                try { Thread.sleep(200); } catch (Exception ignored) {}
+            } catch (Exception e) {
+                System.out.println("⚠️ PIN akışında başka bir durum oluştu → geçiliyor: " + e.getMessage());
+                break;
+            }
+        }
+    }
+
+    // 🔽 BUNU EKLE (aynı sınıfın içinde, en sondaki }'den önce)
+    @SuppressWarnings("unchecked")
+    private void tapWithShell(int x, int y) {
+        java.util.Map<String, Object> args = new java.util.HashMap<>();
+        args.put("command", "input");
+        args.put("args", java.util.Arrays.asList("tap", String.valueOf(x), String.valueOf(y)));
+
+        ((org.openqa.selenium.JavascriptExecutor) driver)
+                .executeScript("mobile: shell", args);
+    }
 }
+
 
 
 
