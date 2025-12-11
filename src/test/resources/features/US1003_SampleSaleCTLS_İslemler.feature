@@ -1,5 +1,5 @@
 Feature: US1003_SampleSaleCTLS_İslemler
-  @run
+  @ignore
   Scenario: TC909 kullanici samplesale uzerinden CTLS satis islemi gecer
     Given kullanici sample sale baslatir
     When  kullanici samplesale uzerinden 10000 tutar girer

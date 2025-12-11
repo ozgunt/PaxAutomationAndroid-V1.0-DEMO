@@ -229,6 +229,10 @@ public class StepDefinitions {
     @And("kullanici mke secimi yapar")
     public void kullaniciMkeSecimiYapar() {
 
+        assert manager.btnMke.isDisplayed();
+
+        System.out.println("MKE button görünür");
+
         manager.btnMke.click();
 
 
