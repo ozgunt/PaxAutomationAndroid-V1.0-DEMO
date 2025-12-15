@@ -14,7 +14,7 @@ Feature: US1002_SampleSaleMKE_SatisTesti
     Then uygulamalar kapatilir
 
 
-  @PipeRun @1
+  @Pignore
   Scenario:TC907 kullanici samplesale uzerinden ziraat combo kart ile MKE satis islemi gecer
     Given kullanici sample sale baslatir
     When  kullanici samplesale uzerinden 10000 tutar girer

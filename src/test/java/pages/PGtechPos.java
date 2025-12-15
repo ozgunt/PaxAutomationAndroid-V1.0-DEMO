@@ -105,6 +105,12 @@ public class PGtechPos {
     @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/grid_text\" and @text=\"İPTAL\"]")
     public  WebElement btnPtalIslemi;
 
+    @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/grid_text\" and @text=\"ZIRAAT BANKASI\"]")
+    public  WebElement btnZiraatBankaSecim;
+
+    @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/grid_text\" and @text=\"HALKBANK\"]")
+    public  WebElement btnHalkBankBankaSecim;
+
 
 
 // ofline pin buttonları
@@ -177,6 +183,10 @@ public class PGtechPos {
 
     @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/tv_title\"]")
     public WebElement lblSeriNoEslesmedi ;
+
+    @AndroidFindBy (id = "com.pax.techpos:id/tv_title")
+    public WebElement lblIlkPuanPoup;
+
 
 
 

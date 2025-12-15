@@ -244,6 +244,8 @@ public class StepDefinitions {
         manager.txtKartNo.sendKeys(ConfigReader.getProperty("ziraat1ComboKartNoKK"));
 
     }
+    
+    
 
     @And("kullanici ziraat1 combo skt girer")
     public void kullaniciZiraatComboSktGirer() {
@@ -694,6 +696,78 @@ public class StepDefinitions {
     }
 
 
+    @Given("kullanici iptal secimi yapar")
+    public void kullaniciIptalSecimiYapar() {
+         sampleSalePage.btnIptal.isDisplayed();
+         sampleSalePage.btnIptal.click();
+    }
+
+    @And("kullanici son stan no bilgisi girer")
+    public void kullaniciSonStanNoBilgisiGirer() {
+
+        salePage.txtStanNo.isDisplayed();
+        salePage.txtStanNo.click();
+        salePage.txtStanNo.clear();
+        salePage.txtStanNo.sendKeys(ConfigReader.getProperty("sonIslemStanNo"));
+    }
+
+    @And("kullanici iptal tusuna basar")
+    public void kullaniciIptalTusunaBasar() {
+       sampleSalePage.btnIptal.isDisplayed();
+       sampleSalePage.btnIptal.click();
+    }
+
+    @And("kullanici banka secimi yapar")
+    public void kullaniciBankaSecimiYapar() {
+        techPos.btnHalkBankBankaSecim.isDisplayed();
+        techPos.btnHalkBankBankaSecim.click();
+
+
+    }
+
+    @When("kullanici samplesale uzerinden {int} tutar girer \\(iptal)")
+    public void kullaniciSamplesaleUzerindenTutarGirerIptal(int tutar) {
+
+        ReusableMethods.iwait()
+                .until(ExpectedConditions.visibilityOf(salePage.txtIptalTutar))
+                .sendKeys(String.valueOf(tutar));
+
+    }
+
+    @And("kullanici Garanti1 kart no girer")
+    public void kullaniciGarantiKartNoGirer() {
+        manager.txtKartNo.sendKeys(ConfigReader.getProperty("garantiBank1KartNo"));
+
+    }
+
+    @And("kullanici Garanti1 skt girer")
+    public void kullaniciGarantiSktGirer() {
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtSKT));
+        manager.txtSKT.sendKeys(ConfigReader.getProperty("garantiBank1SKT"));
+    }
+
+    @And("kullanici Garanti1 cvv girer")
+    public void kullaniciGarantiCvvGirer() {
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtCVV));
+        manager.txtCVV.sendKeys(ConfigReader.getProperty("garantiBank1CCV"));
+
+    }
+
+    @And("kullanici puan {int} girisi yapar")
+    public void kullaniciPuanGirisiYapar(int puan) {
+
+        iwait().until(ExpectedConditions.visibilityOf(techPos.lblIlkPuanPoup));
+        techPos.lblIlkPuanPoup.click();
+
+        techPos.txtTechposAmountText.isDisplayed();
+        techPos.txtTechposAmountText.click();
+        techPos.txtTechposAmountText.sendKeys(String.valueOf(puan));
+        techPos.btnTechposGiris.click();
+
+
+    }
 }
 
 

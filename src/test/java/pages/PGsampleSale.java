@@ -72,6 +72,9 @@ public class PGsampleSale {
     @AndroidFindBy(xpath = "//android.widget.Button[@resource-id=\"android:id/button1\"]")
     public WebElement btnTamamIslemBasarili;
 
+    @AndroidFindBy (id = "com.pax.samplesalea:id/iptalBtn")
+    public WebElement BtnIptal;
+
     // ----------- TEXTBOX ELEMENTLERİ -----------
 
   //  @FindBy(id = "com.pax.samplesalea:id/amountEt")
@@ -79,6 +82,14 @@ public class PGsampleSale {
 
     @AndroidFindBy(xpath = "//android.widget.EditText[@resource-id=\"com.pax.samplesalea:id/amountEt\"]")
     public WebElement txtTutar;
+    @AndroidFindBy(xpath = "//android.widget.EditText[@resource-id=\"com.pax.samplesalea:id/tutarEt\"]")
+    public WebElement txtIptalTutar;
+
+
+    @AndroidFindBy(id = "com.pax.samplesalea:id/stanNoEt")
+    public WebElement txtStanNo;
+
+
 
 
     @AndroidFindBy(xpath = "//android.widget.Spinner[@resource-id=\"com.pax.samplesalea:id/menuSpinner\"]\n")

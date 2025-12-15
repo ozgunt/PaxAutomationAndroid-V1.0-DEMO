@@ -1,6 +1,6 @@
-Feature: cipli satis islemi yapilir
+Feature: US1004 cipli satis islemi yapilir
   @ignore
-  Scenario: cipli dusuk tutar islem yapilir
+  Scenario: TC911 cipli dusuk tutar islem yapilir
     Given kullanici sample sale baslatir
     When  kullanici samplesale uzerinden 1 tutar girer
     And  kullanici samplesale uzerinden satis baslatir
