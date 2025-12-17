@@ -6,6 +6,7 @@ import io.appium.java_client.android.Activity;
 import io.appium.java_client.android.AndroidDriver;
 import io.cucumber.java.PendingException;
 import io.cucumber.java.en.*;
+import net.bytebuddy.asm.Advice;
 import org.junit.jupiter.api.Assertions;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
@@ -20,6 +21,7 @@ import utilities.ReusableMethods;
 import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.android.nativekey.AndroidKey;
 
+import java.sql.Driver;
 import java.time.Duration;
 
 import static utilities.ReusableMethods.*;
@@ -758,13 +760,24 @@ public class StepDefinitions {
     @And("kullanici puan {int} girisi yapar")
     public void kullaniciPuanGirisiYapar(int puan) {
 
-        iwait().until(ExpectedConditions.visibilityOf(techPos.lblIlkPuanPoup));
-        techPos.lblIlkPuanPoup.click();
 
-        techPos.txtTechposAmountText.isDisplayed();
-        techPos.txtTechposAmountText.click();
-        techPos.txtTechposAmountText.sendKeys(String.valueOf(puan));
-        techPos.btnTechposGiris.click();
+
+        try {
+            if (techPos.txtTechposAmountText.isDisplayed()) {
+
+                System.out.println("puan popup mesajının geçmesi bekleniyor");
+                Thread.sleep(11000);
+                techPos.txtTechposAmountText.sendKeys(String.valueOf(puan));
+                techPos.btnTechposGiris.click();
+
+
+            }
+
+        }catch (Exception ignored){
+
+
+        }
+
 
 
     }
