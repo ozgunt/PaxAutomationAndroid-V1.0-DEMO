@@ -35,7 +35,7 @@ public class PGsampleSale {
     public WebElement btnPuanKullanim;
 
     @AndroidFindBy(id = "com.pax.samplesalea:id/menuIptal")
-    public WebElement btnIptal;
+    public WebElement btnIptalMenu;
 
     @AndroidFindBy(id = "com.pax.samplesalea:id/menuReversal")
     public WebElement btnReversal;
@@ -72,8 +72,8 @@ public class PGsampleSale {
     @AndroidFindBy(xpath = "//android.widget.Button[@resource-id=\"android:id/button1\"]")
     public WebElement btnTamamIslemBasarili;
 
-    @AndroidFindBy (id = "com.pax.samplesalea:id/iptalBtn")
-    public WebElement BtnIptal;
+    @AndroidFindBy (xpath = "//android.widget.Button[@resource-id=\"com.pax.samplesalea:id/iptalBtn\"]")
+    public WebElement btnIptal;
 
     // ----------- TEXTBOX ELEMENTLERİ -----------
 

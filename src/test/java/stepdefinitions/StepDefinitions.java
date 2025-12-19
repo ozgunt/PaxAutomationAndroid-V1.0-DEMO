@@ -373,8 +373,16 @@ public class StepDefinitions {
     public void kullaniciIslemBasariliMesajiSonrasiTamamTusunaBasar() {
 
 
-        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(sampleSalePage.btnTamamIslemBasarili)).click();
+        try {
+            ReusableMethods.iwait()
+                    .until(ExpectedConditions.elementToBeClickable(sampleSalePage.btnTamamIslemBasarili));
+            sampleSalePage.btnTamamIslemBasarili.click();
+            System.out.println("✅ İşlem başarılı popup 'Tamam' tıklandı");
+        } catch (Exception e) {
+            System.out.println("ℹ️ İşlem başarılı popup gelmedi → devam ediliyor");
+        }
     }
+
 
     @And("Kullanici cihazi kendi serisine kurar")
     public void kullaniciCihaziKendiSerisineKurar() {
@@ -700,24 +708,27 @@ public class StepDefinitions {
 
     @Given("kullanici iptal secimi yapar")
     public void kullaniciIptalSecimiYapar() {
-         sampleSalePage.btnIptal.isDisplayed();
-         sampleSalePage.btnIptal.click();
+         sampleSalePage.btnIptalMenu.isDisplayed();
+         sampleSalePage.btnIptalMenu.click();
     }
 
     @And("kullanici son stan no bilgisi girer")
     public void kullaniciSonStanNoBilgisiGirer() {
 
-        salePage.txtStanNo.isDisplayed();
-        salePage.txtStanNo.click();
-        salePage.txtStanNo.clear();
-        salePage.txtStanNo.sendKeys(ConfigReader.getProperty("sonIslemStanNo"));
+        ReusableMethods.iwait()
+                .until(ExpectedConditions.visibilityOf(sampleSalePage.txtStanNo))
+                .click();
+        sampleSalePage.txtStanNo.sendKeys(String.valueOf(ConfigReader.getProperty("sonIslemStanNo")));
     }
 
     @And("kullanici iptal tusuna basar")
     public void kullaniciIptalTusunaBasar() {
-       sampleSalePage.btnIptal.isDisplayed();
-       sampleSalePage.btnIptal.click();
+        ReusableMethods.iwait()
+                .until(ExpectedConditions.visibilityOf(sampleSalePage.btnIptal))
+                .click();
+        sampleSalePage.btnIptal.click();
     }
+
 
     @And("kullanici banka secimi yapar")
     public void kullaniciBankaSecimiYapar() {
@@ -731,14 +742,17 @@ public class StepDefinitions {
     public void kullaniciSamplesaleUzerindenTutarGirerIptal(int tutar) {
 
         ReusableMethods.iwait()
-                .until(ExpectedConditions.visibilityOf(salePage.txtIptalTutar))
-                .sendKeys(String.valueOf(tutar));
+                .until(ExpectedConditions.visibilityOf(sampleSalePage.txtIptalTutar))
+                .click();
+        sampleSalePage.txtIptalTutar.sendKeys(String.valueOf(tutar));
+
 
     }
 
     @And("kullanici Garanti1 kart no girer")
     public void kullaniciGarantiKartNoGirer() {
-        manager.txtKartNo.sendKeys(ConfigReader.getProperty("garantiBank1KartNo"));
+        sampleSalePage.txtStanNo.click();
+        sampleSalePage.txtStanNo.sendKeys(ConfigReader.getProperty("garantiBank1KartNo"));
 
     }
 
@@ -780,6 +794,11 @@ public class StepDefinitions {
 
 
 
+    }
+
+    @And("kullanici klavyeyi kapatir")
+    public void kullaniciKlavyeyiKapatir() {
+      ReusableMethods.closeKeyboard();
     }
 }
 

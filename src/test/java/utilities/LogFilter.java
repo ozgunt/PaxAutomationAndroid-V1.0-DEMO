@@ -1,5 +1,7 @@
 package utilities;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
@@ -16,10 +18,12 @@ public class LogFilter {
      * RAW log dosyasından:
      *  - crash bloklarını (beginning of crash / FATAL EXCEPTION)
      *  - Exception satırlarını
-     *  - (istersen) ileride JSON slip satırlarını
+     *  - JSON benzeri satırları
      * ayrı dosyalara çıkarır.
      *
-     * Bu metot TEK PASSTA okuyup biter; blokta kalmaz, thread açmaz.
+     * Ek olarak:
+     *  - RAW log içinden EN SON geçen Slip JSON'u (mercSlipName içeren) yakalar
+     *  - Configuration.properties içine sonIslem* alanlarını yazar
      */
     public static void processRawLog(String rawPath, String scenarioName, boolean failed) {
         if (rawPath == null || rawPath.isEmpty()) {
@@ -59,15 +63,15 @@ public class LogFilter {
             List<String> exceptionOut = new ArrayList<>();
             List<String> jsonOut      = new ArrayList<>();
 
-            boolean inCrashBlock      = false;
-            int crashLinesRemaining   = 0;   // crash başlangıcından sonra kaç satır daha alalım
+            boolean inCrashBlock = false;
+            int crashLinesRemaining = 0; // crash başlangıcından sonra kaç satır daha alalım
 
             for (String line : lines) {
 
                 // Crash başlangıcını yakala
                 if (line.contains("beginning of crash") || line.contains("FATAL EXCEPTION")) {
                     inCrashBlock = true;
-                    crashLinesRemaining = 50;   // başlangıç + 50 satır context yeter
+                    crashLinesRemaining = 50; // başlangıç + 50 satır context yeter
                 }
 
                 if (inCrashBlock) {
@@ -83,11 +87,41 @@ public class LogFilter {
                     exceptionOut.add(line);
                 }
 
-                // JSON slip satırı (şimdilik basit: içinde { ve } geçen satırlar)
-                // Burayı istersen ileride net pattern'e göre daraltırız.
+                // JSON benzeri satırlar (genel dump)
                 if (line.contains("{") && line.contains("}")) {
                     jsonOut.add(line);
                 }
+            }
+
+            // ✅ SON İŞLEM SLIP JSON → Configuration.properties'e yaz
+            String lastSlipJson = extractLastSlipJson(lines);
+            if (lastSlipJson != null && !lastSlipJson.isBlank()) {
+                jsonOut.add("=== LAST SLIP JSON (picked for config update) ===");
+                jsonOut.add(lastSlipJson);
+
+                try {
+                    JsonObject obj = JsonParser.parseString(lastSlipJson).getAsJsonObject();
+
+                    String rrn       = obj.has("rrn")       ? obj.get("rrn").getAsString() : null;
+                    String bankRefNo = obj.has("bankRefNo") ? obj.get("bankRefNo").getAsString() : null;
+                    String acqName   = obj.has("acqName")   ? obj.get("acqName").getAsString() : null;
+                    String tranNo    = obj.has("tranNo")    ? String.valueOf(obj.get("tranNo").getAsInt()) : null;
+                    String stanNo    = obj.has("stanNo")    ? String.valueOf(obj.get("stanNo").getAsInt()) : null;
+
+                    if (rrn != null)       ConfigReader.setProperty("sonIslemRrn", rrn);
+                    if (bankRefNo != null) ConfigReader.setProperty("sonIslemBankaReferansNo", bankRefNo);
+                    if (acqName != null)   ConfigReader.setProperty("sonIslemAcqName", acqName);
+                    if (tranNo != null)    ConfigReader.setProperty("sonIslemTranNo", tranNo);
+                    if (stanNo != null)    ConfigReader.setProperty("sonIslemStanNo", stanNo);
+
+                    logger.info("LogFilter: sonIslem* alanları Configuration.properties'e yazıldı. (rrn={}, stanNo={})", rrn, stanNo);
+
+                } catch (Exception ex) {
+                    logger.error("LogFilter: Slip JSON parse edilemedi → Configuration.properties güncellenmedi.", ex);
+                }
+
+            } else {
+                logger.warn("LogFilter: Slip JSON bulunamadı → Configuration.properties güncellenmedi.");
             }
 
             if (!crashOut.isEmpty()) {
@@ -115,5 +149,40 @@ public class LogFilter {
         } catch (Exception e) {
             logger.error("LogFilter: processRawLog çalışırken beklenmeyen hata oluştu", e);
         }
+    }
+
+    // ✅ RAW log içinde en sonda geçen "MainActivity: { ... mercSlipName ... }" satırını yakala
+    private static String extractLastSlipJson(List<String> lines) {
+
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            String line = lines.get(i);
+
+            // En sağlam hedef: direkt slip json satırı
+            if (line.contains("MainActivity:") && line.contains("{") && line.contains("}")
+                    && line.contains("\"mercSlipName\"")) {
+
+                int s = line.indexOf('{');
+                int e = line.lastIndexOf('}');
+                if (s >= 0 && e > s) {
+                    return line.substring(s, e + 1);
+                }
+            }
+
+            // Fallback: "Slip Json:" satırından sonra birkaç satır içinde json olabilir
+            if (line.contains("Slip Json:")) {
+                for (int j = i + 1; j < Math.min(i + 6, lines.size()); j++) {
+                    String nxt = lines.get(j);
+                    if (nxt.contains("{") && nxt.contains("}") && nxt.contains("\"mercSlipName\"")) {
+                        int s = nxt.indexOf('{');
+                        int e = nxt.lastIndexOf('}');
+                        if (s >= 0 && e > s) {
+                            return nxt.substring(s, e + 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 }

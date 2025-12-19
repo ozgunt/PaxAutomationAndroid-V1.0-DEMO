@@ -1,6 +1,6 @@
 Feature: US1002_SampleSaleMKE_SatisTesti
-@PipeRun @2
-  Scenario:TC906 kullanici samplesale uzerinden halkbank combo kart ile MKE satis islemi gecer
+@PipeRun
+  Scenario: TC906 kullanici samplesale uzerinden halkbank combo kart ile MKE satis islemi gecer
     Given kullanici sample sale baslatir
     When  kullanici samplesale uzerinden 10000 tutar girer
     And  kullanici samplesale uzerinden satis baslatir
@@ -14,8 +14,8 @@ Feature: US1002_SampleSaleMKE_SatisTesti
     Then uygulamalar kapatilir
 
 
-  @Pignore
-  Scenario:TC907 kullanici samplesale uzerinden ziraat combo kart ile MKE satis islemi gecer
+  @PipeRun
+  Scenario: TC907 kullanici samplesale uzerinden ziraat combo kart ile MKE satis islemi gecer
     Given kullanici sample sale baslatir
     When  kullanici samplesale uzerinden 10000 tutar girer
     And  kullanici samplesale uzerinden satis baslatir

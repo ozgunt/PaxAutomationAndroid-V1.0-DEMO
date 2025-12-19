@@ -119,6 +119,15 @@ public class ReusableMethods {
     }
 
     public static void quitDriver() {
+        // ✅ Kim çağırdı? -> Stacktrace bas
+        System.out.println("🧨 quitDriver() ÇAĞRILDI!");
+        System.out.println("🧵 thread = " + Thread.currentThread().getName());
+        try {
+            System.out.println("🏷️ scenario = " + org.apache.logging.log4j.ThreadContext.get("scenario"));
+        } catch (Exception ignore) {}
+
+        new Exception("quitDriver call stack").printStackTrace();
+
         if (driver != null) {
             try {
                 System.out.println("🛑 Uygulama kapatılıyor...");
@@ -131,9 +140,16 @@ public class ReusableMethods {
                 System.out.println("⚠️ App terminate sırasında sorun: " + e.getMessage());
             }
 
-            driver.quit();
-            driver = null;
-            System.out.println("🧹 AndroidDriver kapatıldı ✅");
+            try {
+                driver.quit();
+            } catch (Exception e) {
+                System.out.println("⚠️ driver.quit sırasında sorun: " + e.getMessage());
+            } finally {
+                driver = null;
+                System.out.println("🧹 AndroidDriver kapatıldı ✅");
+            }
+        } else {
+            System.out.println("ℹ️ driver zaten null (önceden kapanmış).");
         }
     }
 
