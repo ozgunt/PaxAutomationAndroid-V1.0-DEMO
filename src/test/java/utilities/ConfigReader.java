@@ -38,11 +38,11 @@ public class ConfigReader {
     }
 
     public static String getProperty(String key) {
-        if (deviceProperties.containsKey(key)) {
-            return deviceProperties.getProperty(key);
-        }
         if (configProperties.containsKey(key)) {
             return configProperties.getProperty(key);
+        }
+        if (deviceProperties.containsKey(key)) {
+            return deviceProperties.getProperty(key);
         }
         return null;
     }

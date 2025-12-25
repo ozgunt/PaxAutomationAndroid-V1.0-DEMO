@@ -9,7 +9,7 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
-
+import io.appium.java_client.pagefactory.AppiumFieldDecorator;
 import javax.xml.xpath.XPath;
 import java.time.Duration;
 
@@ -18,7 +18,7 @@ public class PGtechPos {
 
     public PGtechPos(AndroidDriver driver) {
         this.driver = driver;
-        PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(10)), this);
+               PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(2)), this);
     }
 
     // ----------- BUTTON ELEMENTLERİ -----------
@@ -147,6 +147,14 @@ public class PGtechPos {
     @AndroidFindBy(id = "com.pax.daemon:id/btn_zero")
     public  WebElement btnOflinePinZero;
 
+    //techpos kart okuma ekranı MKE seçimi
+    @AndroidFindBy(xpath = "//android.widget.Button[@resource-id=\"com.pax.techpos:id/button4\"]")
+    public WebElement btnMKE;
+
+    // techpos giriş buttonu
+    @AndroidFindBy (xpath = "//android.widget.Button[@text=\"GİRİŞ\"]")
+    public  WebElement btnGiris;
+
     //Online pin buttonları
 
 
@@ -172,6 +180,19 @@ public class PGtechPos {
 
     @AndroidFindBy(id = "com.pax.techpos:id/amount_edtext")
     public WebElement txtSeriNo;
+
+    //techpos mke ekranları
+    //techpos mke kart no giriş
+    @AndroidFindBy(id = "com.pax.techpos:id/pan_edtext")
+    public WebElement txtKartNoGiriniz;
+    //mke skt giriş
+    @AndroidFindBy(id = "com.pax.techpos:id/exp_edtext")
+    public WebElement txtSKT;
+    //MKE CCV
+    @AndroidFindBy(id = "com.pax.techpos:id/amount_edtext")
+    public WebElement txtCCV;
+
+
 
     // ----------- Label ELEMENTLERİ -----------
     //seri numarası giriniz yazısı

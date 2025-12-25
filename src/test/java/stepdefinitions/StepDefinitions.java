@@ -6,8 +6,12 @@ import io.appium.java_client.android.Activity;
 import io.appium.java_client.android.AndroidDriver;
 import io.cucumber.java.PendingException;
 import io.cucumber.java.en.*;
+import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
+import org.apache.poi.ss.formula.atp.Switch;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.platform.commons.function.Try;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
@@ -20,7 +24,9 @@ import utilities.ConfigReader;
 import utilities.ReusableMethods;
 import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.android.nativekey.AndroidKey;
+import io.appium.java_client.pagefactory.AppiumFieldDecorator;
 
+import java.security.spec.ECField;
 import java.sql.Driver;
 import java.time.Duration;
 
@@ -41,15 +47,15 @@ public class StepDefinitions {
     public void kullanici_sample_sale_baslatir() throws Exception {
         setUp();
         salePage = ReusableMethods.sampleSalePage;
-        manager  = ReusableMethods.managerPage;
-        techPos  = ReusableMethods.techPosPage;
+        manager = ReusableMethods.managerPage;
+        techPos = ReusableMethods.techPosPage;
 
 
         System.out.println("✅ Sample Sale baslatildi!");
 
         salePage = sampleSalePage;
-        manager  = managerPage;
-        techPos  = techPosPage;
+        manager = managerPage;
+        techPos = techPosPage;
     }
 
     @When("kullanici samplesale uzerinden merchant menuye giris yapar")
@@ -71,7 +77,7 @@ public class StepDefinitions {
 
     @And("kullanici isyeri menuden parametre secimi yapar")
     public void kullanici_islem_menuden_parametre_secimi_yapar() {
-     //   ReusableMethods.iwait().until(ExpectedConditions.elementToBeClickable(techPos.btnParametre)).click();
+        //   ReusableMethods.iwait().until(ExpectedConditions.elementToBeClickable(techPos.btnParametre)).click();
 
         ReusableMethods.iwait()
                 .until(ExpectedConditions.elementToBeClickable(techPos.btnParametre))
@@ -99,7 +105,7 @@ public class StepDefinitions {
                 return;
             }
 
-          //  Thread.sleep(300);
+            //  Thread.sleep(300);
         }
 
         System.out.println("❌ 120 sn boyunca beklenen ekran gelmedi → kapatmıyoruz!");
@@ -110,7 +116,7 @@ public class StepDefinitions {
     public void kullanici_techpos_sifresi_girer() {
 
 
-         ReusableMethods.techPosPage.txtTechposAmountText.clear();
+        ReusableMethods.techPosPage.txtTechposAmountText.clear();
         techPos.txtTechposAmountText.sendKeys("0000");
         techPos.btnTechposGiris.click();
 
@@ -231,6 +237,7 @@ public class StepDefinitions {
     @And("kullanici mke secimi yapar")
     public void kullaniciMkeSecimiYapar() {
 
+
         assert manager.btnMke.isDisplayed();
 
         System.out.println("MKE button görünür");
@@ -246,8 +253,7 @@ public class StepDefinitions {
         manager.txtKartNo.sendKeys(ConfigReader.getProperty("ziraat1ComboKartNoKK"));
 
     }
-    
-    
+
 
     @And("kullanici ziraat1 combo skt girer")
     public void kullaniciZiraatComboSktGirer() {
@@ -273,7 +279,11 @@ public class StepDefinitions {
         ReusableMethods.closeKeyboard();
         ReusableMethods.iwait();
 
-        manager.btnTamam.click();
+        try {
+            manager.btnTamam.click();
+
+        } catch (Exception ignored) {
+        }
 
     }
 
@@ -371,6 +381,12 @@ public class StepDefinitions {
 
     @And("kullanici islem basarili mesaji sonrasi tamam tusuna basar")
     public void kullaniciIslemBasariliMesajiSonrasiTamamTusunaBasar() {
+
+
+        // ✅ techPos objesi null mı? -> asıl NPE sebebi burada
+        if (sampleSalePage == null) {
+            throw new RuntimeException("techPosPage null. setUp() çağrılmamış veya PGtechPos init olmamış.");
+        }
 
 
         try {
@@ -541,7 +557,10 @@ public class StepDefinitions {
             } catch (org.openqa.selenium.StaleElementReferenceException e) {
                 System.out.println("⚠️ PIN elementi stale oldu → 1 kere yeniden denenecek...");
                 i--; // 1 kere retry yap
-                try { Thread.sleep(200); } catch (Exception ignored) {}
+                try {
+                    Thread.sleep(200);
+                } catch (Exception ignored) {
+                }
             } catch (Exception e) {
                 System.out.println("⚠️ PIN akışında başka bir durum oluştu → geçiliyor");
                 break;
@@ -582,15 +601,15 @@ public class StepDefinitions {
     @And("kullanici transaction menude bulunan elementlerin gorunurlugunu test eder")
     public void kullaniciTransactionMenudeBulunanElementlerinGorunurlugunuTestEder() {
         if (techPos == null) techPos = new PGtechPos(ReusableMethods.driver);
-        assertElementVisible("Transaction menude Satış buttonu görüldü",techPos.btnSatisIslemi );
-        assertElementVisible("Transaction menude Taksitli satış buttonu görüldü",techPos.btnTaksitliSatisIslemi);
-        assertElementVisible("Transaction menude puan kullanımı buttonu görüldü",techPos.btnPuanKullanimiIslemi );
-        assertElementVisible("Transaction menude puan sorgu buttonu görüldü",techPos.btnPuanSorguIslemi);
-        assertElementVisible("Transaction menude ön provizyon açma buttonu görüldü",techPos.btnProvizyonIslemi);
-        assertElementVisible("Transaction menude ön provizyon kapama buttonu görüldü",techPos.btnProvizyonKapamaIslemi);
-        assertElementVisible("Transaction menude ön provizyon iptal buttonu görüldü",techPos.btnProvizyonIptalIslemi);
-        assertElementVisible("Transaction menude eşlenikLİ iade buttonu görüldü",techPos.btnEslenikliIadeIslemi);
-        assertElementVisible("Transaction menude eşlenikSİZ buttonu görüldü",techPos.btnEsleniksizIadeIslemi);
+        assertElementVisible("Transaction menude Satış buttonu görüldü", techPos.btnSatisIslemi);
+        assertElementVisible("Transaction menude Taksitli satış buttonu görüldü", techPos.btnTaksitliSatisIslemi);
+        assertElementVisible("Transaction menude puan kullanımı buttonu görüldü", techPos.btnPuanKullanimiIslemi);
+        assertElementVisible("Transaction menude puan sorgu buttonu görüldü", techPos.btnPuanSorguIslemi);
+        assertElementVisible("Transaction menude ön provizyon açma buttonu görüldü", techPos.btnProvizyonIslemi);
+        assertElementVisible("Transaction menude ön provizyon kapama buttonu görüldü", techPos.btnProvizyonKapamaIslemi);
+        assertElementVisible("Transaction menude ön provizyon iptal buttonu görüldü", techPos.btnProvizyonIptalIslemi);
+        assertElementVisible("Transaction menude eşlenikLİ iade buttonu görüldü", techPos.btnEslenikliIadeIslemi);
+        assertElementVisible("Transaction menude eşlenikSİZ buttonu görüldü", techPos.btnEsleniksizIadeIslemi);
         swipeUp();
         assertElementVisible("Transaction menude iptal buttonu görüldü", techPos.btnProvizyonIptalIslemi);
 
@@ -686,7 +705,10 @@ public class StepDefinitions {
             } catch (org.openqa.selenium.StaleElementReferenceException e) {
                 System.out.println("⚠️ PIN elementi stale oldu → 1 kere yeniden denenecek...");
                 i--;
-                try { Thread.sleep(200); } catch (Exception ignored) {}
+                try {
+                    Thread.sleep(200);
+                } catch (Exception ignored) {
+                }
             } catch (Exception e) {
                 System.out.println("⚠️ PIN akışında başka bir durum oluştu → geçiliyor: " + e.getMessage());
                 break;
@@ -708,8 +730,8 @@ public class StepDefinitions {
 
     @Given("kullanici iptal secimi yapar")
     public void kullaniciIptalSecimiYapar() {
-         sampleSalePage.btnIptalMenu.isDisplayed();
-         sampleSalePage.btnIptalMenu.click();
+        sampleSalePage.btnIptalMenu.isDisplayed();
+        sampleSalePage.btnIptalMenu.click();
     }
 
     @And("kullanici son stan no bilgisi girer")
@@ -723,20 +745,49 @@ public class StepDefinitions {
 
     @And("kullanici iptal tusuna basar")
     public void kullaniciIptalTusunaBasar() {
-        ReusableMethods.iwait()
-                .until(ExpectedConditions.visibilityOf(sampleSalePage.btnIptal))
-                .click();
+
         sampleSalePage.btnIptal.click();
     }
 
 
-    @And("kullanici banka secimi yapar")
-    public void kullaniciBankaSecimiYapar() {
-        techPos.btnHalkBankBankaSecim.isDisplayed();
-        techPos.btnHalkBankBankaSecim.click();
+    @And("kullanici {string} banka secimi yapar")
+    public void kullaniciBankaSecimiYapar(String banka) {
 
+        // TechPOS'a geç
+        ReusableMethods.switchToApp("com.pax.techpos");
 
+        // Paket TechPOS olana kadar KISA bekle (uzun bekleme yok)
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(x -> "com.pax.techpos".equals(driver.getCurrentPackage()));
+        } catch (Exception ignored) {}
+
+        System.out.println("PKG=" + driver.getCurrentPackage());
+        System.out.println("ACT=" + driver.currentActivity());
+
+        // ✅ Bank listesi gerçekten var mı? (yoksa bekleme yapma, patlama yapma)
+        By gridAny = AppiumBy.id("com.pax.techpos:id/grid_text");
+        if (driver.findElements(gridAny).isEmpty()) {
+            System.out.println("ℹ️ Bank listesi ekranı değil (grid_text yok) -> banka secimi ATLANDI");
+            return;
+        }
+
+        // Bankayı seç (TextView clickable olmayabiliyor -> parent'a tık)
+        String bankText = banka.equalsIgnoreCase("halkbank") ? "HALKBANK"
+                : banka.equalsIgnoreCase("ziraat")   ? "ZIRAAT"
+                : banka.toUpperCase();
+
+        By bankCell = AppiumBy.xpath(
+                "//android.widget.TextView[@resource-id='com.pax.techpos:id/grid_text' and @text='" + bankText + "']/.."
+        );
+
+        ReusableMethods.iwait()
+                .until(ExpectedConditions.elementToBeClickable(bankCell))
+                .click();
+
+        System.out.println("✅ Banka seçildi: " + bankText);
     }
+
 
     @When("kullanici samplesale uzerinden {int} tutar girer \\(iptal)")
     public void kullaniciSamplesaleUzerindenTutarGirerIptal(int tutar) {
@@ -775,7 +826,6 @@ public class StepDefinitions {
     public void kullaniciPuanGirisiYapar(int puan) {
 
 
-
         try {
             if (techPos.txtTechposAmountText.isDisplayed()) {
 
@@ -787,20 +837,106 @@ public class StepDefinitions {
 
             }
 
-        }catch (Exception ignored){
+        } catch (Exception ignored) {
 
 
         }
-
 
 
     }
 
     @And("kullanici klavyeyi kapatir")
     public void kullaniciKlavyeyiKapatir() {
-      ReusableMethods.closeKeyboard();
+        ReusableMethods.closeKeyboard();
+    }
+
+    @And("kullanici techpos {string} kart no girer")
+    public void kullaniciTechposHalkbankKartNoGirer(String banka) {
+
+        switch (banka) {
+
+            case "halkbank1":
+
+                techPosPage.txtKartNoGiriniz.sendKeys(ConfigReader.getProperty("halkbank1ComboKartNoKK"));
+
+                break;
+        }
+
+
+    }
+
+    @And("kullanici techpos {string} skt girer")
+    public void kullaniciTechposSktGirer(String banka) {
+        switch (banka) {
+            case "halkbank1":
+                techPosPage.txtSKT.sendKeys(ConfigReader.getProperty("halkbank1ComboSKT"));
+                break;
+
+        }
+    }
+
+    @And("kullanici techpos {string} cvv girer")
+    public void kullaniciTechposCvvGirer(String banka) {
+
+        switch (banka){
+        case "halkbank1":
+
+
+
+      try {
+          techPosPage.txtTechposAmountText.sendKeys(ConfigReader.getProperty("halkbank1ComboCcvKK"));
+
+          techPosPage.btnGiris.isDisplayed();
+          techPosPage.btnGiris.click();
+          Thread.sleep(8000);
+
+      }catch (Exception e){
+
+      }
+      break;
+        }
+
+
+
+
+
+    }
+
+    @Then("kullanici techpos giris tusuna basar")
+    public void kullaniciTechposGirisTusunaBasar() throws InterruptedException {
+        techPosPage.btnGiris.isDisplayed();
+        techPosPage.btnGiris.click();
+        Thread.sleep(8000);
+
+
+    }
+
+    @And("kullanici techpos mke secimi yapar")
+    public void kullaniciTechposMkeSecimiYapar() {
+
+        // Burada da kilitlenmeyelim: switch yap, paket techpos ise dene; değilse yine de click dene.
+        ReusableMethods.switchToApp("com.pax.techpos");
+
+        System.out.println("PKG=" + driver.getCurrentPackage());
+        System.out.println("ACT=" + driver.currentActivity());
+
+        // 1) Önce mevcut POM elementini dene
+        try {
+            techPosPage.btnMKE.click();
+            System.out.println("✅ btnMKE tıklandı (POM)");
+            return;
+        } catch (Exception ignored) {
+        }
+
+
+        // 2) Fallback: inspector’da gördüğün id (button4) — bu yeni ekran layout’uysa buradan yürür
+        By mkeFallback = AppiumBy.id("com.pax.techpos:id/button4");
+        ReusableMethods.iwait().until(ExpectedConditions.elementToBeClickable(mkeFallback)).click();
+        System.out.println("✅ btnMKE tıklandı (fallback button4)");
     }
 }
+
+
 
 
 

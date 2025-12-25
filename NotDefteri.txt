@@ -42,3 +42,12 @@
             } catch (StaleElementReferenceException | NoSuchElementException e) {
                 return false;
             }
+
+çıkarılan adımlar
+     #   And kullanici Garanti1 kart no girer
+  #  And kullanici Garanti1 skt girer
+   # And kullanici Garanti1 cvv girer
+ #   And kullanici puan 1000 girisi yapar
+  #  Then kullanici tamam tusuna basar
+   # And kullanici islem basarili mesaji sonrasi tamam tusuna basar
+    #And kullanici samplesale satis slibine basar

@@ -95,6 +95,26 @@ public class LogFilter {
 
             // ✅ SON İŞLEM SLIP JSON → Configuration.properties'e yaz
             String lastSlipJson = extractLastSlipJson(lines);
+
+            // ✅ Pipeline/loop'ta slip JSON logu gecikmeli gelebiliyor.
+            // RAW dosyaya düşene kadar bekle (maks 8 sn) ve tekrar oku.
+            long deadline = System.currentTimeMillis() + 8000;
+            while ((lastSlipJson == null || lastSlipJson.isBlank()) && System.currentTimeMillis() < deadline) {
+                try {
+                    Thread.sleep(500); // 0.5 sn bekle
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+
+                try {
+                    List<String> retryLines = Files.readAllLines(rawFile, StandardCharsets.UTF_8);
+                    lastSlipJson = extractLastSlipJson(retryLines);
+                } catch (IOException ignore) {
+                    break;
+                }
+            }
+
             if (lastSlipJson != null && !lastSlipJson.isBlank()) {
                 jsonOut.add("=== LAST SLIP JSON (picked for config update) ===");
                 jsonOut.add(lastSlipJson);

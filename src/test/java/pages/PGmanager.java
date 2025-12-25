@@ -20,7 +20,7 @@ public class PGmanager {
     // Constructor: PageFactory başlatılır
     public PGmanager(AndroidDriver driver) {
         this.driver = driver;
-        PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(10)), this);
+        PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(2)), this);
     }
 
     // ----------- BUTTON ELEMENTLERİ -----------
