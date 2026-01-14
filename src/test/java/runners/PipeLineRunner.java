@@ -21,10 +21,10 @@ public class PipeLineRunner {
                     scriptPath
             );
 
-            // Çalışma dizini proje kökü olsun
+            // Çalışma dizini proje kökü
             pb.directory(new File(projectDir));
 
-            // Maven çıktısı doğrudan IntelliJ konsoluna aksın
+            // Maven çıktısı  IntelliJ konsoluna basılması
             pb.inheritIO();
 
             Process process = pb.start();
@@ -32,7 +32,7 @@ public class PipeLineRunner {
 
             System.out.println("Pipeline bitti. Exit code = " + exitCode);
 
-            // IDE'de kırmızı/yeşil görünsün
+            // IDE kırmızı/yeşil düzenlemesi
             if (exitCode != 0) {
                 System.exit(exitCode);
             }

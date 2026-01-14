@@ -932,13 +932,13 @@ public class StepDefinitions {
     @And("kullanici techpos mke secimi yapar")
     public void kullaniciTechposMkeSecimiYapar() {
 
-        // Burada da kilitlenmeyelim: switch yap, paket techpos ise dene; değilse yine de click dene.
+
         ReusableMethods.switchToApp("com.pax.techpos");
 
         System.out.println("PKG=" + driver.getCurrentPackage());
         System.out.println("ACT=" + driver.currentActivity());
 
-        // 1) Önce mevcut POM elementini dene
+
         try {
             techPosPage.btnMKE.click();
             System.out.println("✅ btnMKE tıklandı (POM)");
@@ -947,7 +947,7 @@ public class StepDefinitions {
         }
 
 
-        // 2) Fallback: inspector’da gördüğün id (button4) — bu yeni ekran layout’uysa buradan yürür
+
         By mkeFallback = AppiumBy.id("com.pax.techpos:id/button4");
         ReusableMethods.iwait().until(ExpectedConditions.elementToBeClickable(mkeFallback)).click();
         System.out.println("✅ btnMKE tıklandı (fallback button4)");
@@ -986,7 +986,7 @@ public class StepDefinitions {
 // ✅ kontrol
              String typed = managerPage.txtKartNo.getText();
              if (typed == null || typed.isBlank()) {
-                 // custom keypad/secure input -> sendKeys yemedi
+
                  java.util.Map<String, Object> args = new java.util.HashMap<>();
                  args.put("command", "input");
                  args.put("args", java.util.Arrays.asList("text", card));

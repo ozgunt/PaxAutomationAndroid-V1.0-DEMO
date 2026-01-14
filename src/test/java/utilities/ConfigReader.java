@@ -94,7 +94,7 @@ public class ConfigReader {
                 }
             }
 
-            // key yoksa en sona ekle (normalde sen zaten yer ayırıyorsun)
+            // key yoksa en sona ekle
             if (!replaced) {
                 out.add(key + "=" + escapedValue);
             }

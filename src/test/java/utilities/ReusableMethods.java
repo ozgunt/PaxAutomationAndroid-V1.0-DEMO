@@ -200,7 +200,6 @@ public class ReusableMethods {
     }
 
     // ✅ STALE/RACE için tek noktadan “stabil click”
-    // Step’lerde tek tek locator yazmadan kullanırsın: ReusableMethods.safeClick(techPosPage.btnMKE, "MKE");
     public static void safeClick(WebElement element, String name) {
         int retry = 3;
         while (retry-- > 0) {
