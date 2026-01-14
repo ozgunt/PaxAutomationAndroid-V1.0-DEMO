@@ -11,10 +11,6 @@
 
 
 
-
-
-
-
 {
   "platformName": "Android",
   "appium:deviceName": "PaxA910",

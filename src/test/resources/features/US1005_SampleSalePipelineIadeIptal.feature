@@ -1,4 +1,4 @@
-@PipeLineRun
+@run
 Feature: US1005 satis iptal iade islemleri yapilir
 
   Scenario: TC912 kullanici samplesale uzerinden halkbank combo kart ile MKE satis islemi gecer
@@ -13,7 +13,7 @@ Feature: US1005 satis iptal iade islemleri yapilir
     And kullanici islem basarili mesaji sonrasi tamam tusuna basar
     And kullanici samplesale satis slibine basar
 
-@PipeLineRun
+  @run
   Scenario: TC913 kullanici iptal islemi yapar
     Given kullanici iptal secimi yapar
     When kullanici samplesale uzerinden 10000 tutar girer (iptal)

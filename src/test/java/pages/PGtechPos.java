@@ -18,7 +18,7 @@ public class PGtechPos {
 
     public PGtechPos(AndroidDriver driver) {
         this.driver = driver;
-               PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(2)), this);
+               PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(10)), this);
     }
 
     // ----------- BUTTON ELEMENTLERİ -----------
@@ -207,6 +207,10 @@ public class PGtechPos {
 
     @AndroidFindBy (id = "com.pax.techpos:id/tv_title")
     public WebElement lblIlkPuanPoup;
+
+    @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/header\"]")
+    public WebElement lblHeader;
+
 
 
 

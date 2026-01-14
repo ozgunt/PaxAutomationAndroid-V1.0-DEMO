@@ -8,7 +8,9 @@ import io.cucumber.java.PendingException;
 import io.cucumber.java.en.*;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
+import org.apache.logging.log4j.core.appender.ScriptAppenderSelector;
 import org.apache.poi.ss.formula.atp.Switch;
+import org.apache.xmlbeans.GDuration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.platform.commons.function.Try;
@@ -142,7 +144,7 @@ public class StepDefinitions {
             System.out.println("📌 Seri No ekranı geldi → Doğrulama gerekir!");
             techPos.txtTechposGenelBox.click();
             techPos.txtTechposGenelBox.clear();
-            techPos.txtTechposGenelBox.sendKeys("159632147");
+            techPos.txtTechposGenelBox.sendKeys("900000009");
             techPos.btnTechposGiris.click();
 
 
@@ -151,13 +153,19 @@ public class StepDefinitions {
                             AppiumBy.xpath("//android.widget.Button[@index='14']")));
             techPos.txtTechposGenelBox.click();
             techPos.txtTechposGenelBox.clear();
-            techPos.txtTechposGenelBox.sendKeys("159632147");
+            techPos.txtTechposGenelBox.sendKeys("900000009");
             techPos.btnTechposGiris.click();
         } else {
             System.out.println("📌 Seri No ekranı gelmedi → Direkt IP giriş ekranı!");
             new WebDriverWait(driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.txtIpGiriniz1));
         }
+
+        ReusableMethods.iwait().until(ExpectedConditions.textToBePresentInElement(techPos.lblHeader, "TCKN"));
+        techPos.btnGiris.click();
+
+        ReusableMethods.iwait().until(ExpectedConditions.textToBePresentInElement(techPos.lblHeader, "VKN"));
+        techPos.btnGiris.click();
 
         System.out.println("📌 IP & Port bilgisi giriliyor...");
 
@@ -860,7 +868,11 @@ public class StepDefinitions {
                 techPosPage.txtKartNoGiriniz.sendKeys(ConfigReader.getProperty("halkbank1ComboKartNoKK"));
 
                 break;
+
+            case "garanti1":
+                techPos.txtKartNoGiriniz.sendKeys(ConfigReader.getProperty("garantiBank1KartNo"));
         }
+
 
 
     }
@@ -871,7 +883,8 @@ public class StepDefinitions {
             case "halkbank1":
                 techPosPage.txtSKT.sendKeys(ConfigReader.getProperty("halkbank1ComboSKT"));
                 break;
-
+            case  "garanti1":
+                techPosPage.txtSKT.sendKeys(ConfigReader.getProperty("garantiBank1SKT"));
         }
     }
 
@@ -880,6 +893,11 @@ public class StepDefinitions {
 
         switch (banka){
         case "halkbank1":
+            techPosPage.txtCCV.sendKeys(ConfigReader.getProperty("halkbank1ComboCcvKK"));
+
+
+            case "garanti1":
+                techPosPage.txtCCV.sendKeys(ConfigReader.getProperty("garantiBank1CCV"));
 
 
 
@@ -933,6 +951,76 @@ public class StepDefinitions {
         By mkeFallback = AppiumBy.id("com.pax.techpos:id/button4");
         ReusableMethods.iwait().until(ExpectedConditions.elementToBeClickable(mkeFallback)).click();
         System.out.println("✅ btnMKE tıklandı (fallback button4)");
+    }
+
+    @Given("kullanici iade secimi yapar")
+    public void kullaniciIadeSecimiYapar() {
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(sampleSalePage.btnIade)).click();
+
+
+    }
+
+    @And("kullanici son islem referans numarasi girer")
+    public void kullaniciSonIslemReferansNumarasiGirer() {
+
+        ReusableMethods.iwait()
+                .until(ExpectedConditions.visibilityOf(sampleSalePage.txtBankRefNo))
+                .click();
+        sampleSalePage.txtBankRefNo.sendKeys(String.valueOf(ConfigReader.getProperty("sonIslemBankaReferansNo")));
+    }
+
+
+
+    @And("kullanici manager {string} kart no girer")
+    public void kullaniciManagerBankaKartNoGirer(String banka) {
+     switch (banka){
+         case "Garanti1":
+
+             String card = ConfigReader.getProperty("garantiBank1KartNo");
+
+             iwait().until(ExpectedConditions.elementToBeClickable(managerPage.txtKartNo)).click();
+             managerPage.txtKartNo.clear();
+             managerPage.txtKartNo.sendKeys(card);
+
+// ✅ kontrol
+             String typed = managerPage.txtKartNo.getText();
+             if (typed == null || typed.isBlank()) {
+                 // custom keypad/secure input -> sendKeys yemedi
+                 java.util.Map<String, Object> args = new java.util.HashMap<>();
+                 args.put("command", "input");
+                 args.put("args", java.util.Arrays.asList("text", card));
+                 ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("mobile: shell", args);
+             }
+             break;
+
+     }
+
+    }
+
+    @And("kullanici manager {string} skt girer")
+    public void kullaniciManagerSktGirer(String banka) {
+      switch (banka){
+
+          case "Garanti1":
+              iwait().until(ExpectedConditions.visibilityOf(managerPage.txtSKT)).click();
+              managerPage.txtSKT.clear();
+              managerPage.txtSKT.sendKeys(ConfigReader.getProperty("garantiBank1SKT"));
+              break;
+      }
+    }
+
+    @And("kullanici manager {string} cvv girer")
+    public void kullaniciManagerCvvGirer(String banka) {
+
+        switch (banka){
+            case "Garanti1":
+                iwait().until(ExpectedConditions.visibilityOf(managerPage.txtCVV)).click();
+                managerPage.txtCVV.clear();
+                managerPage.txtCVV.sendKeys(ConfigReader.getProperty("garantiBank1CCV"));
+                break;
+        }
+
     }
 }
 

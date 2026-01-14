@@ -85,8 +85,8 @@ public class PGsampleSale {
     public WebElement txtTutar;
     @AndroidFindBy(xpath = "//android.widget.EditText[@resource-id=\"com.pax.samplesalea:id/tutarEt\"]")
     public WebElement txtIptalTutar;
-
-
+    @AndroidFindBy(id = "com.pax.samplesalea:id/bankRefNoEt")
+    public WebElement txtBankRefNo;
     @AndroidFindBy(id = "com.pax.samplesalea:id/stanNoEt")
     public WebElement txtStanNo;
 

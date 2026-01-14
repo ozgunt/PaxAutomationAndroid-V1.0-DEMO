@@ -10,7 +10,7 @@ Feature: US1001 kullanici samplesale uzerinden kurulum parametre günsonu yapar
     When kullanici hata mesajini gorur
     And uygulamalar kapatilir
 
-  @ignore
+  @run
   Scenario: TC901 kullanici samplesale uzerinden basarili kurulum yapabilmeli
     Given kullanici sample sale baslatir
     When kullanici samplesale uzerinden merchant menuye giris yapar
