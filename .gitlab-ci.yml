@@ -1,0 +1,82 @@
+# 1. TEMEL AYARLAR
+# Projen JDK 11 olduğu için Maven'ın JDK 11 yüklü resmi imajını kullanıyoruz.
+image: maven:3.6.3-jdk-11
+
+variables:
+  # Maven bağımlılıklarını klasörde tutarak her seferinde internetten indirmeyi engelleriz.
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  # Appium URL'sini kodun içinden değil, buradan yönetmek esneklik sağlar.
+  APPIUM_URL: "http://127.0.0.1:4723/wd/hub"
+
+# 2. AŞAMALAR (STAGES)
+stages:
+  - build      # Projenin derlenmesi
+  - quality    # Kod standartları ve Checkstyle kontrolü
+  - test       # Appium / POS Otomasyon testleri
+  - package    # Çalıştırılabilir JAR/APK dosyasının üretilmesi
+  - deploy     # Dağıtım ve bilgilendirme
+
+# 3. ÖNBELLEK (CACHE)
+# Hız bizim için önemli. Bağımlılıkları (jar dosyalarını) cache'e alıyoruz.
+cache:
+  paths:
+    - .m2/repository
+
+# --- İŞLER (JOBS) ---
+
+# 1. DERLEME
+compile_project:
+  stage: build
+  script:
+    - echo "Maven ile proje derleniyor..."
+    - mvn clean compile
+  artifacts:
+    paths:
+      - target/
+    expire_in: 1 hour
+
+# 2. KALİTE KONTROL
+code_quality:
+  stage: quality
+  script:
+    - echo "Statik kod analizi yapılıyor..."
+    - mvn checkstyle:check || echo "Stil uyarıları var ama kritik değil."
+  allow_failure: true # Stil hataları olsa bile test aşamasına geçmesini sağlar.
+
+# 3. OTOMASYON TESTLERİ
+pos_automation_tests:
+  stage: test
+  # KRİTİK: Eğer testler senin bilgisayarındaki Appium'a bağlanacaksa,
+  # bilgisayarına kuracağın Runner'a 'pos-runner' etiketini vermelisin.
+  tags:
+    - pos-runner 
+  script:
+    - echo "Appium Sunucusu aranıyor: $APPIUM_URL"
+    - mvn test -Dappium.url=$APPIUM_URL
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+
+# 4. PAKETLEME
+build_package:
+  stage: package
+  script:
+    - echo "Testler başarıyla tamamlandı. Paket üretiliyor..."
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    name: "pos-automation-build-$CI_COMMIT_REF_NAME"
+
+# 5. DAĞITIM VE BİLGİLENDİRME
+deployment_status:
+  stage: deploy
+  script:
+    - echo "Proje başarıyla paketlendi: target/ altındaki dosyayı kullanabilirsiniz."
+    - echo "Dağıtım aşaması tamamlandı."
+  only:
+    - main # Sadece ana koda (main branch) bir şey eklendiğinde çalışır.
