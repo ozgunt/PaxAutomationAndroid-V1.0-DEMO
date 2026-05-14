@@ -1,11 +1,9 @@
-# 1. TEMEL AYARLAR
 image: maven:3.6.3-jdk-11
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   APPIUM_URL: "http://127.0.0.1:4723/wd/hub"
 
-# 2. AŞAMALAR (STAGES)
 stages:
   - build
   - quality
@@ -13,39 +11,26 @@ stages:
   - package
   - deploy
 
-# 3. ÖNBELLEK (CACHE)
 cache:
   paths:
     - .m2/repository
 
-# --- İŞLER (JOBS) ---
-
-# 1. DERLEME
 compile_project:
   stage: build
   script:
-    - echo "Maven ile proje derleniyor..."
     - mvn clean compile
-  artifacts:
-    paths:
-      - target/
-    expire_in: 1 hour
 
-# 2. KALİTE KONTROL
 code_quality:
   stage: quality
   script:
-    - echo "Statik kod analizi yapılıyor..."
-    - mvn checkstyle:check || echo "Stil uyarıları var ama kritik değil."
+    - mvn checkstyle:check || echo "Stil hatasi"
   allow_failure: true
 
-# 3. OTOMASYON TESTLERİ
 pos_automation_tests:
   stage: test
   tags:
     - pos-runner
   script:
-    - echo "Appium Sunucusu aranıyor: $APPIUM_URL"
     - mvn test -Dappium.url=$APPIUM_URL
   artifacts:
     when: always
@@ -55,22 +40,14 @@ pos_automation_tests:
       junit:
         - target/surefire-reports/TEST-*.xml
 
-# 4. PAKETLEME
 build_package:
   stage: package
   script:
-    - echo "Testler başarıyla tamamlandı. Paket üretiliyor..."
     - mvn package -DskipTests
-  artifacts:
-    paths:
-      - target/*.jar
-    name: "pos-automation-build-$CI_COMMIT_REF_NAME"
 
-# 5. DAĞITIM VE BİLGİLENDİRME
 deployment_status:
   stage: deploy
   script:
-    - echo "Proje başarıyla paketlendi: target/ altındaki dosyayı kullanabilirsiniz."
-    - echo "Dağıtım aşaması tamamlandı."
+    - echo "Bitti"
   only:
     - main
