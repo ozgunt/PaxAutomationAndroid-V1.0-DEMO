@@ -1,68 +1,10 @@
+# The Docker image that will be used to build your app
 image: maven:3.6.3-jdk-11
-
-variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  APPIUM_URL: "http://127.0.0.1:4723/wd/hub"
-
-stages:
-  - build
-  - quality
-  - test
-  - package
-  - deploy
-
-cache:
-  paths:
-    - .m2/repository
-
-compile_project:
-  stage: build
-  script:
-    - mvn clean compile
-
-code_quality:
-  stage: quality
-  script:
-    - mvn checkstyle:check || echo "Stil hatasi"
-  allow_failure: true
-
-pos_automation_tests:
-  stage: test
-  tags:
-    - pos-runner
-  script:
-    - mvn test -Dappium.url=$APPIUM_URL
-  allow_failure: true # Testler kalsa bile raporun oluşması için kritik
-  artifacts:
-    when: always
-    paths:
-      - target/surefire-reports/
-      - target/allure-results/  # ✅ Allure ham verilerini saklıyoruz
-    reports:
-      junit:
-        - target/surefire-reports/TEST-*.xml
-
-build_package:
-  stage: package
-  script:
-    - mvn package -DskipTests
-
-# ✅ GitLab Pages üzerinden Allure Raporunu Yayınlama
-pages:
-  stage: deploy
-  image: frankescobar/allure-docker-service
-  script:
-    # 'public' klasörü oluştur ve raporu içine üret
-    - allure generate target/allure-results -o public --clean
-  artifacts:
-    paths:
-      - public # GitLab Pages bu klasöre bakar
-  only:
-    - main
-
-deployment_status:
-  stage: deploy
-  script:
-    - echo "Pipeline ve Raporlama Bitti"
-  only:
-    - main
+create-pages:
+  pages:
+    # The folder that contains the files to be exposed at the Page URL
+    publish: public
+  rules:
+    # This ensures that only pushes to the default branch will trigger
+    # a pages deploy
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
