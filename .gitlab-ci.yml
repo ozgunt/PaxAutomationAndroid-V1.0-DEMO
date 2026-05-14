@@ -32,10 +32,12 @@ pos_automation_tests:
     - pos-runner
   script:
     - mvn test -Dappium.url=$APPIUM_URL
+  allow_failure: true # Testler kalsa bile raporun oluşması için kritik
   artifacts:
     when: always
     paths:
       - target/surefire-reports/
+      - target/allure-results/  # ✅ Allure ham verilerini saklıyoruz
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
@@ -45,9 +47,22 @@ build_package:
   script:
     - mvn package -DskipTests
 
+# ✅ GitLab Pages üzerinden Allure Raporunu Yayınlama
+pages:
+  stage: deploy
+  image: frankescobar/allure-docker-service
+  script:
+    # 'public' klasörü oluştur ve raporu içine üret
+    - allure generate target/allure-results -o public --clean
+  artifacts:
+    paths:
+      - public # GitLab Pages bu klasöre bakar
+  only:
+    - main
+
 deployment_status:
   stage: deploy
   script:
-    - echo "Bitti"
+    - echo "Pipeline ve Raporlama Bitti"
   only:
     - main
