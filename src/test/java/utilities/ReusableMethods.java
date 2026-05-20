@@ -5,15 +5,10 @@ import org.junit.jupiter.api.Assertions;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import pages.PGmanager;
-import pages.PGsampleSale;
-import pages.PGtechPos;
 
 import java.io.File;
-import java.net.URL;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,89 +25,15 @@ public class ReusableMethods {
 
     public static AndroidDriver driver;
 
-    public static PGsampleSale sampleSalePage;
-    public static PGmanager managerPage;
-    public static PGtechPos techPosPage;
-
-    public static void setUp() throws Exception {
-
-        // ✅ Aktif cihaz bilgilerini al
-        Device device = DeviceManager.getActiveDevice();
-        if (device == null) {
-            throw new RuntimeException("❌ Device bulunamadı. DeviceConfiguration.properties kontrol et!");
-        }
-
-        // ✅ Aktif uygulamayı al (ör: Samplesale / Techpos / Manager)
-        String activeAppKey = ConfigReader.getProperty("activeApp");
-
-        // ✅ Package al
-        String appPackage = ConfigReader.AppConfigReader.getAppProperty(activeAppKey + "PackageName");
-
-        // ✅ APK yolu al (fallback)
-        String relativeAppPath = ConfigReader.AppConfigReader.getAppProperty(activeAppKey);
-        File appFile = new File(System.getProperty("user.dir") + "/" + relativeAppPath);
-
-        // ✅ Appium server URL
-        String serverUrl = ConfigReader.getProperty("appium.server.url");
-        if (serverUrl == null || serverUrl.isEmpty()) {
-            serverUrl = "http://127.0.0.1:4723/wd/hub";
-        }
-
-        DesiredCapabilities caps = new DesiredCapabilities();
-        caps.setCapability("platformName", device.getPlatformName());
-        caps.setCapability("automationName", device.getAutomationName());
-        caps.setCapability("deviceName", device.getName());
-        caps.setCapability("udid", device.getUdid());
-        caps.setCapability("disableWindowAnimation", true);
-
-        // ✅ HIZLI AÇILIŞ
-        if (appPackage != null && !appPackage.isEmpty()) {
-            caps.setCapability("appPackage", appPackage);
-            System.out.println("📌 Package üzerinden başlatılıyor: " + appPackage);
-        } else {
-            caps.setCapability("app", appFile.getAbsolutePath());
-            System.out.println("📌 APK yükleniyor: " + appFile.getAbsolutePath());
-        }
-
-        // ✅ Samplesale özel case → Activity gerekli
-        if (activeAppKey.equalsIgnoreCase("Samplesale")) {
-            String appActivity = ConfigReader.AppConfigReader.getAppProperty(activeAppKey + "MainActivity");
-            caps.setCapability("appActivity", appActivity);
-            System.out.println("🎯 Activity eklendi: " + appActivity);
-        }
-
-        caps.setCapability("noReset", true);
-        caps.setCapability("fullReset", false);
-        caps.setCapability("newCommandTimeout", 300);
-        caps.setCapability("ignoreHiddenApiPolicyError", true);
-        caps.setCapability("autoGrantPermissions", true);
-
-        // ✅ Driver Başlat
-        driver = new AndroidDriver(new URL(serverUrl), caps);
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-
-        // ✅ Page init
-        sampleSalePage = new PGsampleSale(driver);
-        managerPage = new PGmanager(driver);
-        techPosPage = new PGtechPos(driver);
-
-        System.out.println("✅ AndroidDriver başlatıldı → " + device.getName());
-        System.out.println("✅ Açılan uygulama → " + activeAppKey);
-    }
-
     public static void quitDriver() {
         if (driver != null) {
             try {
                 System.out.println("🛑 Uygulama kapatılıyor...");
-
-                // ✅ Uygulamaları cihazdan öldür (senin mevcut davranışın)
                 driver.terminateApp("com.pax.techpos");
                 driver.terminateApp("com.pax.samplesalea");
-
             } catch (Exception e) {
                 System.out.println("⚠️ App terminate sırasında sorun: " + e.getMessage());
             }
-
             try {
                 driver.quit();
             } catch (Exception e) {
@@ -124,31 +45,24 @@ public class ReusableMethods {
         }
     }
 
-    // ✅ Senin step’ler bozulmasın diye İSMİ KORUDUM
     public static void driverWaitForApp() {
         AndroidDriver driverCast = (AndroidDriver) driver;
         WebDriverWait wait = new WebDriverWait(driverCast, Duration.ofSeconds(30));
-
         System.out.println("⏳ Uygulama geçişi bekleniyor...");
-
         String targetPackage = driverCast.getCurrentPackage();
-
         switch (targetPackage) {
             case "com.pax.samplesalea":
                 wait.until(d -> "com.pax.samplesalea".equals(driverCast.getCurrentPackage()));
                 System.out.println("✅ Samplesale aktif.");
                 break;
-
             case "com.pax.techpos":
                 wait.until(d -> "com.pax.techpos".equals(driverCast.getCurrentPackage()));
                 System.out.println("✅ TechPOS aktif.");
                 break;
-
             case "com.pax.mainapp":
                 wait.until(d -> "com.pax.mainapp".equals(driverCast.getCurrentPackage()));
                 System.out.println("✅ Manager aktif.");
                 break;
-
             default:
                 throw new RuntimeException("❌ Tanımsız package: " + targetPackage);
         }
@@ -158,17 +72,13 @@ public class ReusableMethods {
         try {
             String currentPackage = driver.getCurrentPackage();
             System.out.println("Aktif Package: " + currentPackage);
-
             if (expectedPackage.equals(currentPackage)) {
                 System.out.println("✅ Zaten " + expectedPackage + " içindesin.");
                 return;
             }
-
             System.out.println("⏳ " + expectedPackage + " uygulamasına geçiş bekleniyor...");
-
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
             wait.until(d -> expectedPackage.equals(driver.getCurrentPackage()));
-
             System.out.println("✅ " + expectedPackage + " uygulamasına geçildi!");
         } catch (Exception e) {
             throw new RuntimeException("❌ switchToApp hata: " + e.getMessage());
@@ -199,8 +109,6 @@ public class ReusableMethods {
         }
     }
 
-    // ✅ STALE/RACE için tek noktadan “stabil click”
-    // Step’lerde tek tek locator yazmadan kullanırsın: ReusableMethods.safeClick(techPosPage.btnMKE, "MKE");
     public static void safeClick(WebElement element, String name) {
         int retry = 3;
         while (retry-- > 0) {
@@ -212,9 +120,7 @@ public class ReusableMethods {
             } catch (org.openqa.selenium.StaleElementReferenceException stale) {
                 System.out.println("⚠️ STALE yakalandı: " + name + " (retry)");
             } catch (Exception e) {
-                if (retry <= 0) {
-                    throw e;
-                }
+                if (retry <= 0) throw e;
                 System.out.println("⚠️ Click retry: " + name + " → " + e.getMessage());
             }
         }
@@ -235,16 +141,14 @@ public class ReusableMethods {
             Dimension size = driver.manage().window().getSize();
             int startX = size.width / 2;
             int startY = (int) (size.height * 0.80);
-            int endY = (int) (size.height * 0.20);
+            int endY   = (int) (size.height * 0.20);
 
             PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
             Sequence swipe = new Sequence(finger, 1);
-
             swipe.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX, startY));
             swipe.addAction(finger.createPointerDown(0));
             swipe.addAction(finger.createPointerMove(Duration.ofMillis(600), PointerInput.Origin.viewport(), startX, endY));
             swipe.addAction(finger.createPointerUp(0));
-
             driver.perform(Collections.singletonList(swipe));
             System.out.println("📱 swipeUp OK (pointer)");
         } catch (Exception e) {

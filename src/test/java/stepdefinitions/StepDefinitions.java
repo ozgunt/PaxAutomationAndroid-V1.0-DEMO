@@ -4,6 +4,8 @@ import com.google.gson.annotations.Until;
 import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.Activity;
 import io.appium.java_client.android.AndroidDriver;
+import io.cucumber.java.Before;
+import io.cucumber.java.BeforeStep;
 import io.cucumber.java.PendingException;
 import io.cucumber.java.en.*;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -23,6 +25,7 @@ import pages.PGmanager;
 import pages.PGsampleSale;
 import pages.PGtechPos;
 import utilities.ConfigReader;
+import utilities.PageContext;
 import utilities.ReusableMethods;
 import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.android.nativekey.AndroidKey;
@@ -32,7 +35,6 @@ import java.security.spec.ECField;
 import java.sql.Driver;
 import java.time.Duration;
 
-import static utilities.ReusableMethods.*;
 
 public class StepDefinitions {
 
@@ -44,20 +46,19 @@ public class StepDefinitions {
     PGmanager manager;
     PGtechPos techPos;
 
+    // Her adım öncesi ReusableMethods'taki güncel referansları local field'lara kopyala
+    @BeforeStep
+    public void syncPages() {
+        if (PageContext.sampleSalePage != null) salePage = PageContext.sampleSalePage;
+        if (PageContext.managerPage != null) manager = PageContext.managerPage;
+        if (PageContext.techPosPage != null) techPos = PageContext.techPosPage;
+    }
+
 
     @Given("kullanici sample sale baslatir")
     public void kullanici_sample_sale_baslatir() throws Exception {
-        setUp();
-        salePage = ReusableMethods.sampleSalePage;
-        manager = ReusableMethods.managerPage;
-        techPos = ReusableMethods.techPosPage;
-
-
+        PageContext.setUp();
         System.out.println("✅ Sample Sale baslatildi!");
-
-        salePage = sampleSalePage;
-        manager = managerPage;
-        techPos = techPosPage;
     }
 
     @When("kullanici samplesale uzerinden merchant menuye giris yapar")
@@ -65,7 +66,7 @@ public class StepDefinitions {
         ReusableMethods.swipeUp();
 
         //ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(salePage.lstMenuAc)).click();
-        new WebDriverWait(driver, Duration.ofSeconds(2))
+        new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(2))
                 .until(ExpectedConditions.visibilityOfElementLocated(
                         AppiumBy.id("com.pax.samplesalea:id/menuSpinner")
                 ))
@@ -118,7 +119,7 @@ public class StepDefinitions {
     public void kullanici_techpos_sifresi_girer() {
 
 
-        ReusableMethods.techPosPage.txtTechposAmountText.clear();
+        techPos.txtTechposAmountText.clear();
         techPos.txtTechposAmountText.sendKeys("0000");
         techPos.btnTechposGiris.click();
 
@@ -127,37 +128,37 @@ public class StepDefinitions {
 
     @Then("Kullanici kurulum bilgisi girer")
     public void kullanici_kurulum_bilgisi_girer() {
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
+        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
 
         boolean isSeriNoEkraniAcik;
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(3))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.lblSeriNumarasiGiriniz));
             isSeriNoEkraniAcik = true;
         } catch (Exception e) {
             isSeriNoEkraniAcik = false;
         }
 
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
         if (isSeriNoEkraniAcik) {
             System.out.println("📌 Seri No ekranı geldi → Doğrulama gerekir!");
             techPos.txtTechposGenelBox.click();
             techPos.txtTechposGenelBox.clear();
-            techPos.txtTechposGenelBox.sendKeys("900000009");
+            techPos.txtTechposGenelBox.sendKeys("900000011");
             techPos.btnTechposGiris.click();
 
 
-            new WebDriverWait(driver, Duration.ofSeconds(5))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(7))
                     .until(ExpectedConditions.elementToBeClickable(
                             AppiumBy.xpath("//android.widget.Button[@index='14']")));
             techPos.txtTechposGenelBox.click();
             techPos.txtTechposGenelBox.clear();
-            techPos.txtTechposGenelBox.sendKeys("900000009");
+            techPos.txtTechposGenelBox.sendKeys("900000011");
             techPos.btnTechposGiris.click();
         } else {
             System.out.println("📌 Seri No ekranı gelmedi → Direkt IP giriş ekranı!");
-            new WebDriverWait(driver, Duration.ofSeconds(3))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.txtIpGiriniz1));
         }
 
@@ -169,22 +170,22 @@ public class StepDefinitions {
 
         System.out.println("📌 IP & Port bilgisi giriliyor...");
 
-        techPos.txtIpGiriniz1.sendKeys("031");
-        techPos.txtIpGiriniz2.sendKeys("145");
-        techPos.txtIPgiriniz3.sendKeys("171");
-        techPos.txtIPgiriniz4.sendKeys("94");
+        techPos.txtIpGiriniz1.sendKeys("213");
+        techPos.txtIpGiriniz2.sendKeys("248");
+        techPos.txtIPgiriniz3.sendKeys("141");
+        techPos.txtIPgiriniz4.sendKeys("194");
         techPos.btnTechposGiris.click();
 
-        techPos.txtTechposGenelBox.sendKeys("12121");
+        techPos.txtTechposGenelBox.sendKeys("12500");
         techPos.btnTechposGiris.click();
 
-        techPos.txtIpGiriniz1.sendKeys("031");
-        techPos.txtIpGiriniz2.sendKeys("145");
-        techPos.txtIPgiriniz3.sendKeys("171");
-        techPos.txtIPgiriniz4.sendKeys("94");
+        techPos.txtIpGiriniz1.sendKeys("213");
+        techPos.txtIpGiriniz2.sendKeys("248");
+        techPos.txtIPgiriniz3.sendKeys("141");
+        techPos.txtIPgiriniz4.sendKeys("194");
         techPos.btnTechposGiris.click();
 
-        techPos.txtTechposGenelBox.sendKeys("12121");
+        techPos.txtTechposGenelBox.sendKeys("12500");
         techPos.btnTechposGiris.click();
 
         System.out.println("✅ Kurulum tamamlandi ✅");
@@ -194,7 +195,7 @@ public class StepDefinitions {
     public void kullaniciGunsonuSecimiYapar() throws InterruptedException {
 
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20)); // 20 saniye bekle
+        WebDriverWait wait = new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(20)); // 20 saniye bekle
         wait.until(ExpectedConditions.visibilityOf(techPos.btnGunsonu)).click(); // Görünürse tıkla
         wait.until(ExpectedConditions.visibilityOf(techPos.getBtnGunsonuDetay)).click(); // Görünürse tıkla
 
@@ -206,7 +207,7 @@ public class StepDefinitions {
     public void kullanici_techpos_secimi_yapar() {
 
         try {
-            WebDriverWait fastWait = new WebDriverWait(driver, Duration.ofSeconds(1));
+            WebDriverWait fastWait = new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(1));
             WebElement techPosButton = fastWait.until(
                     ExpectedConditions.visibilityOfElementLocated(
                             AppiumBy.xpath("//*[@text='TechPOS']")
@@ -219,7 +220,7 @@ public class StepDefinitions {
         }
 
         // ✅ DOĞRU YER: Geçişten sonra aktif package logu
-        String pkg = driver.getCurrentPackage();
+        String pkg = ReusableMethods.driver.getCurrentPackage();
         System.out.println("📌 Gerçek Aktif Package: " + pkg);
     }
 
@@ -237,7 +238,7 @@ public class StepDefinitions {
     public void kullaniciSamplesaleUzerindenSatisBaslatir() {
 
 
-        sampleSalePage.btnSatisBaslat.click();
+        salePage.btnSatisBaslat.click();
 
     }
 
@@ -281,8 +282,8 @@ public class StepDefinitions {
 
     }
 
-    @Then("kullanici tamam tusuna basar")
-    public void kullaniciTamamTusunaBasar() {
+    @Then("kullanici manager tamam tusuna basar")
+    public void kullaniciManagerTamamTusunaBasar() {
 
         ReusableMethods.closeKeyboard();
         ReusableMethods.iwait();
@@ -297,57 +298,93 @@ public class StepDefinitions {
 
     @And("kullanici halkbank1 combo KK no girer")
     public void kullaniciHalkbanComboKKNoGirer() {
-
-        manager.txtKartNo.click();
+        String card = ConfigReader.getProperty("halkbank1ComboKartNoKK");
         ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtKartNo));
-        manager.txtKartNo.sendKeys(ConfigReader.getProperty("halkbank1ComboKartNoKK"));
-
+        manager.txtKartNo.click();
+        manager.txtKartNo.sendKeys(card);
+        try {
+            String typed = manager.txtKartNo.getText();
+            if (typed == null || typed.isBlank()) {
+                java.util.Map<String, Object> args = new java.util.HashMap<>();
+                args.put("command", "input");
+                args.put("args", java.util.Arrays.asList("text", card));
+                ReusableMethods.driver.executeScript("mobile: shell", args);
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ getText kontrol hatası, devam ediliyor: " + e.getMessage());
+        }
     }
 
     @And("kullanici halkbank1 combo skt girer")
     public void kullaniciHalkbankComboSktGirer() {
-        manager.txtSKT.click();
+        String skt = ConfigReader.getProperty("halkbank1ComboSKT");
         ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtSKT));
-        manager.txtSKT.sendKeys(ConfigReader.getProperty("halkbank1ComboSKT"));
+        manager.txtSKT.click();
+        manager.txtSKT.sendKeys(skt);
+        try {
+            String typed = manager.txtSKT.getText();
+            if (typed == null || typed.isBlank()) {
+                java.util.Map<String, Object> args = new java.util.HashMap<>();
+                args.put("command", "input");
+                args.put("args", java.util.Arrays.asList("text", skt));
+                ReusableMethods.driver.executeScript("mobile: shell", args);
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ getText kontrol hatası, devam ediliyor: " + e.getMessage());
+        }
     }
 
     @And("kullanici halkbank1 combo KK cvv girer")
     public void kullaniciHalkbankComboKKCvvGirer() {
-        manager.txtCVV.click();
+        String cvv = ConfigReader.getProperty("halkbank1ComboCcvKK");
         ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtCVV));
-        manager.txtCVV.sendKeys(ConfigReader.getProperty("halkbank1ComboCcvKK"));
+        manager.txtCVV.click();
+        manager.txtCVV.sendKeys(cvv);
+        try {
+            String typed = manager.txtCVV.getText();
+            if (typed == null || typed.isBlank()) {
+                java.util.Map<String, Object> args = new java.util.HashMap<>();
+                args.put("command", "input");
+                args.put("args", java.util.Arrays.asList("text", cvv));
+                ReusableMethods.driver.executeScript("mobile: shell", args);
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ getText kontrol hatası, devam ediliyor: " + e.getMessage());
+        }
     }
 
     @And("kullanici samplesale gunsonu slibine dokunur")
     public void kullaniciSamplesaleGunsonuSlibineDokunur() {
-
-
-        try {
-            if (salePage.lblSlip1.isDisplayed()) {
-                salePage.lblSlip1.click();
-                System.out.println("📄 Slip ekranı tıklandı");
-                Thread.sleep(300);
-            } else {
-                System.out.println("ℹ️ Slip ekranı görünmedi → devam ediliyor");
-            }
-        } catch (org.openqa.selenium.NoSuchElementException e) {
-            System.out.println("ℹ️ Slip elementi bulunamadı → devam ediliyor");
-        } catch (org.openqa.selenium.StaleElementReferenceException e) {
-            System.out.println("⚠️ Slip elementi stale oldu → yeniden kontrol ediliyor...");
+        int n = 2;
+        while (n > 0) {
             try {
-                // stale durumunda tek sefer yeniden bulma
-                WebElement slip = driver.findElement(AppiumBy.id("com.pax.samplesalea:id/lblSlip"));
-                slip.click();
-                System.out.println("📄 Slip yeniden bulundu ve tıklandı");
-            } catch (Exception inner) {
-                System.out.println("⚠️ Slip yeniden bulunamadı: " + inner.getMessage());
+                if (salePage.lblSlip1.isDisplayed()) {
+                    salePage.lblSlip1.click();
+                    System.out.println("📄 Slip ekranı tıklandı");
+                    Thread.sleep(300);
+                } else {
+                    System.out.println("ℹ️ Slip ekranı görünmedi → devam ediliyor");
+                    break;
+                }
+            } catch (org.openqa.selenium.NoSuchElementException e) {
+                System.out.println("ℹ️ Slip elementi bulunamadı → devam ediliyor");
+                break;
+            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                System.out.println("⚠️ Slip elementi stale oldu → yeniden kontrol ediliyor...");
+                try {
+                    WebElement slip = ReusableMethods.driver.findElement(AppiumBy.id("com.pax.samplesalea:id/lblSlip"));
+                    slip.click();
+                    System.out.println("📄 Slip yeniden bulundu ve tıklandı");
+                } catch (Exception inner) {
+                    System.out.println("⚠️ Slip yeniden bulunamadı: " + inner.getMessage());
+                }
+            } catch (Exception e) {
+                System.out.println("⚠️ Slip kontrolünde hata: " + e.getMessage());
+                break;
             }
-        } catch (Exception e) {
-            System.out.println("⚠️ Slip kontrolünde hata: " + e.getMessage());
+            n--;
         }
-
     }
-
     @And("kullanici samplesale satis slibine basar")
     public void kullaniciSamplesaleSatisSlibineBasar() throws InterruptedException {
 
@@ -392,15 +429,15 @@ public class StepDefinitions {
 
 
         // ✅ techPos objesi null mı? -> asıl NPE sebebi burada
-        if (sampleSalePage == null) {
+        if (salePage == null) {
             throw new RuntimeException("techPosPage null. setUp() çağrılmamış veya PGtechPos init olmamış.");
         }
 
 
         try {
             ReusableMethods.iwait()
-                    .until(ExpectedConditions.elementToBeClickable(sampleSalePage.btnTamamIslemBasarili));
-            sampleSalePage.btnTamamIslemBasarili.click();
+                    .until(ExpectedConditions.elementToBeClickable(salePage.btnTamamIslemBasarili));
+            salePage.btnTamamIslemBasarili.click();
             System.out.println("✅ İşlem başarılı popup 'Tamam' tıklandı");
         } catch (Exception e) {
             System.out.println("ℹ️ İşlem başarılı popup gelmedi → devam ediliyor");
@@ -410,18 +447,18 @@ public class StepDefinitions {
 
     @And("Kullanici cihazi kendi serisine kurar")
     public void kullaniciCihaziKendiSerisineKurar() {
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
+        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
 
         boolean isSeriNoEkraniAcik;
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(3))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.lblSeriNumarasiGiriniz));
             isSeriNoEkraniAcik = true;
         } catch (Exception e) {
             isSeriNoEkraniAcik = false;
         }
 
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
         if (isSeriNoEkraniAcik) {
             System.out.println("📌 Seri No ekranı geldi → Doğrulama gerekir!");
@@ -429,14 +466,14 @@ public class StepDefinitions {
             techPos.btnTechposGiris.click();
 
 
-            new WebDriverWait(driver, Duration.ofSeconds(5))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(5))
                     .until(ExpectedConditions.elementToBeClickable(
                             AppiumBy.xpath("//android.widget.Button[@index='14']")));
 
             techPos.btnTechposGiris.click();
         } else {
             System.out.println("📌 Seri No ekranı gelmedi → Direkt IP giriş ekranı!");
-            new WebDriverWait(driver, Duration.ofSeconds(3))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.txtIpGiriniz1));
         }
 
@@ -468,18 +505,18 @@ public class StepDefinitions {
     public void kullaniciYanlisSeriNoGirer() {
 
 
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
+        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
 
         boolean isSeriNoEkraniAcik;
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(3))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.lblSeriNumarasiGiriniz));
             isSeriNoEkraniAcik = true;
         } catch (Exception e) {
             isSeriNoEkraniAcik = false;
         }
 
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
         if (isSeriNoEkraniAcik) {
             System.out.println("📌 Seri No ekranı geldi → Doğrulama gerekir!");
@@ -489,7 +526,7 @@ public class StepDefinitions {
             techPos.btnTechposGiris.click();
 
 
-            new WebDriverWait(driver, Duration.ofSeconds(5))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(5))
                     .until(ExpectedConditions.elementToBeClickable(
                             AppiumBy.xpath("//android.widget.Button[@index='14']")));
             techPos.txtTechposGenelBox.click();
@@ -506,7 +543,7 @@ public class StepDefinitions {
     public void kullaniciHataMesajiniGorur() {
 
 
-        assertElementVisible("Seri numarası eşleşmedi mesajı", techPosPage.lblSeriNoEslesmedi);
+        ReusableMethods.assertElementVisible("Seri numarası eşleşmedi mesajı", techPos.lblSeriNoEslesmedi);
 
     }
 
@@ -518,7 +555,7 @@ public class StepDefinitions {
         ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(techPos.lblSeriNumarasiGiriniz));
 
 
-        pressBack();
+        ReusableMethods.pressBack();
 
 
     }
@@ -528,17 +565,17 @@ public class StepDefinitions {
     public void kullaniciMerchantMenudeBulunanElementlerinGorunurlugunuTestEder() {
 
 
-        assertElementVisible("Merchant menüde günsonu buttonu görüldü", techPos.btnGunsonu);
-        assertElementVisible("Merchant menüde ara rapor buttonu görüldü", techPos.btnAraRapor);
-        assertElementVisible("Merchant menüde fiş tekrarı buttonu görüldü", techPos.btnFisTekrari);
-        assertElementVisible("Merchant menüde banka seçimi buttonu görüldü", techPos.btnBankaSecimi);
-        assertElementVisible("Merchant menüde parametre buttonu görüldü", techPos.btnParametre);
-        assertElementVisible("Merchant menüde banka irtibat buttonu görüldü", techPos.btnBankaIrtibat);
-        assertElementVisible("Merchant menüde şifre değiştirme buttonu görüldü", techPos.btnSifreDegistirme);
-        assertElementVisible("Merchant menüde şifre sıfırlama buttonu görüldü", techPos.btnSifreSifirlama);
-        assertElementVisible("Merchant menüde sistem param buttonu görüldü", techPos.btnSistemParamRaporu);
-        swipeUp();
-        assertElementVisible("Merchant menüde otomatik günsonu aç kapa buttonu görüldü", techPos.btnOtomatikGunsonuAcKapa);
+        ReusableMethods.assertElementVisible("Merchant menüde günsonu buttonu görüldü", techPos.btnGunsonu);
+        ReusableMethods.assertElementVisible("Merchant menüde ara rapor buttonu görüldü", techPos.btnAraRapor);
+        ReusableMethods.assertElementVisible("Merchant menüde fiş tekrarı buttonu görüldü", techPos.btnFisTekrari);
+        ReusableMethods.assertElementVisible("Merchant menüde banka seçimi buttonu görüldü", techPos.btnBankaSecimi);
+        ReusableMethods.assertElementVisible("Merchant menüde parametre buttonu görüldü", techPos.btnParametre);
+        ReusableMethods.assertElementVisible("Merchant menüde banka irtibat buttonu görüldü", techPos.btnBankaIrtibat);
+        ReusableMethods.assertElementVisible("Merchant menüde şifre değiştirme buttonu görüldü", techPos.btnSifreDegistirme);
+        ReusableMethods.assertElementVisible("Merchant menüde şifre sıfırlama buttonu görüldü", techPos.btnSifreSifirlama);
+        ReusableMethods.assertElementVisible("Merchant menüde sistem param buttonu görüldü", techPos.btnSistemParamRaporu);
+        ReusableMethods.swipeUp();
+        ReusableMethods.assertElementVisible("Merchant menüde otomatik günsonu aç kapa buttonu görüldü", techPos.btnOtomatikGunsonuAcKapa);
 
     }
 
@@ -547,7 +584,7 @@ public class StepDefinitions {
 
         for (int i = 0; i < 2; i++) {
             try {
-                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+                WebDriverWait wait = new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3));
 
                 wait.until(ExpectedConditions.visibilityOf(techPos.txtTechposGenelBox));
 
@@ -575,7 +612,7 @@ public class StepDefinitions {
             }
         }
 
-        System.out.println("📌 Gerçek Aktif Package: " + driver.getCurrentPackage());
+        System.out.println("📌 Gerçek Aktif Package: " + ReusableMethods.driver.getCurrentPackage());
     }
 
     @When("kullanici samplesale uzerinden transaction menuye giris yapar")
@@ -591,7 +628,7 @@ public class StepDefinitions {
                 ExpectedConditions.visibilityOf(salePage.btnTaksitliSatis)
         );
 
-        swipeUp();
+        ReusableMethods.swipeUp();
 
         // ✅ EKLENECEK TEK SATIR:
         ReusableMethods.iwait().until(
@@ -609,17 +646,17 @@ public class StepDefinitions {
     @And("kullanici transaction menude bulunan elementlerin gorunurlugunu test eder")
     public void kullaniciTransactionMenudeBulunanElementlerinGorunurlugunuTestEder() {
         if (techPos == null) techPos = new PGtechPos(ReusableMethods.driver);
-        assertElementVisible("Transaction menude Satış buttonu görüldü", techPos.btnSatisIslemi);
-        assertElementVisible("Transaction menude Taksitli satış buttonu görüldü", techPos.btnTaksitliSatisIslemi);
-        assertElementVisible("Transaction menude puan kullanımı buttonu görüldü", techPos.btnPuanKullanimiIslemi);
-        assertElementVisible("Transaction menude puan sorgu buttonu görüldü", techPos.btnPuanSorguIslemi);
-        assertElementVisible("Transaction menude ön provizyon açma buttonu görüldü", techPos.btnProvizyonIslemi);
-        assertElementVisible("Transaction menude ön provizyon kapama buttonu görüldü", techPos.btnProvizyonKapamaIslemi);
-        assertElementVisible("Transaction menude ön provizyon iptal buttonu görüldü", techPos.btnProvizyonIptalIslemi);
-        assertElementVisible("Transaction menude eşlenikLİ iade buttonu görüldü", techPos.btnEslenikliIadeIslemi);
-        assertElementVisible("Transaction menude eşlenikSİZ buttonu görüldü", techPos.btnEsleniksizIadeIslemi);
-        swipeUp();
-        assertElementVisible("Transaction menude iptal buttonu görüldü", techPos.btnProvizyonIptalIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude Satış buttonu görüldü", techPos.btnSatisIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude Taksitli satış buttonu görüldü", techPos.btnTaksitliSatisIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude puan kullanımı buttonu görüldü", techPos.btnPuanKullanimiIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude puan sorgu buttonu görüldü", techPos.btnPuanSorguIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude ön provizyon açma buttonu görüldü", techPos.btnProvizyonIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude ön provizyon kapama buttonu görüldü", techPos.btnProvizyonKapamaIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude ön provizyon iptal buttonu görüldü", techPos.btnProvizyonIptalIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude eşlenikLİ iade buttonu görüldü", techPos.btnEslenikliIadeIslemi);
+        ReusableMethods.assertElementVisible("Transaction menude eşlenikSİZ buttonu görüldü", techPos.btnEsleniksizIadeIslemi);
+        ReusableMethods.swipeUp();
+        ReusableMethods.assertElementVisible("Transaction menude iptal buttonu görüldü", techPos.btnProvizyonIptalIslemi);
 
 
     }
@@ -628,7 +665,7 @@ public class StepDefinitions {
     public void kullaniciGeriTusuylaCikisYapar() throws InterruptedException {
 
 
-        pressBack();
+        ReusableMethods.pressBack();
 
     }
 
@@ -673,7 +710,7 @@ public class StepDefinitions {
     public void kullaniciOflinePinGirer() {
         for (int i = 0; i < 2; i++) {
             try {
-                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+                WebDriverWait wait = new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3));
                 wait.until(ExpectedConditions.visibilityOf(techPos.lblOflinePinEkrani));
 
                 // 1 tuşunun merkezi
@@ -731,59 +768,70 @@ public class StepDefinitions {
         args.put("command", "input");
         args.put("args", java.util.Arrays.asList("tap", String.valueOf(x), String.valueOf(y)));
 
-        ((org.openqa.selenium.JavascriptExecutor) driver)
+        ((org.openqa.selenium.JavascriptExecutor) ReusableMethods.driver)
                 .executeScript("mobile: shell", args);
     }
 
 
     @Given("kullanici iptal secimi yapar")
     public void kullaniciIptalSecimiYapar() {
-        sampleSalePage.btnIptalMenu.isDisplayed();
-        sampleSalePage.btnIptalMenu.click();
+        salePage.btnIptalMenu.isDisplayed();
+        salePage.btnIptalMenu.click();
     }
 
     @And("kullanici son stan no bilgisi girer")
     public void kullaniciSonStanNoBilgisiGirer() {
 
         ReusableMethods.iwait()
-                .until(ExpectedConditions.visibilityOf(sampleSalePage.txtStanNo))
+                .until(ExpectedConditions.visibilityOf(salePage.txtStanNo))
                 .click();
-        sampleSalePage.txtStanNo.sendKeys(String.valueOf(ConfigReader.getProperty("sonIslemStanNo")));
+        salePage.txtStanNo.sendKeys(String.valueOf(ConfigReader.getProperty("sonIslemStanNo")));
     }
 
-    @And("kullanici iptal tusuna basar")
-    public void kullaniciIptalTusunaBasar() {
+    @And("kullanici iade tusuna basar")
+    public void kullaniciiadeTusunaBasar() {
 
-        sampleSalePage.btnIptal.click();
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(salePage.btnIadeIslemBTN)).click();
+
     }
 
 
     @And("kullanici {string} banka secimi yapar")
     public void kullaniciBankaSecimiYapar(String banka) {
 
-        // TechPOS'a geç
         ReusableMethods.switchToApp("com.pax.techpos");
 
-        // Paket TechPOS olana kadar KISA bekle (uzun bekleme yok)
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(10))
-                    .until(x -> "com.pax.techpos".equals(driver.getCurrentPackage()));
-        } catch (Exception ignored) {}
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(10))
+                    .until(x -> "com.pax.techpos".equals(ReusableMethods.driver.getCurrentPackage()));
+        } catch (Exception ignored) {
+        }
 
-        System.out.println("PKG=" + driver.getCurrentPackage());
-        System.out.println("ACT=" + driver.currentActivity());
+        System.out.println("PKG=" + ReusableMethods.driver.getCurrentPackage());
+        System.out.println("ACT=" + ReusableMethods.driver.currentActivity());
 
-        // ✅ Bank listesi gerçekten var mı? (yoksa bekleme yapma, patlama yapma)
         By gridAny = AppiumBy.id("com.pax.techpos:id/grid_text");
-        if (driver.findElements(gridAny).isEmpty()) {
+        if (ReusableMethods.driver.findElements(gridAny).isEmpty()) {
             System.out.println("ℹ️ Bank listesi ekranı değil (grid_text yok) -> banka secimi ATLANDI");
             return;
         }
 
-        // Bankayı seç (TextView clickable olmayabiliyor -> parent'a tık)
-        String bankText = banka.equalsIgnoreCase("halkbank") ? "HALKBANK"
-                : banka.equalsIgnoreCase("ziraat")   ? "ZIRAAT"
-                : banka.toUpperCase();
+        String bankText;
+        switch (banka.toLowerCase()) {
+            case "halkbank":
+                bankText = "HALKBANK";
+                break;
+            case "ziraat":
+                bankText = "ZIRAAT";
+                break;
+            case "garanti1":
+                bankText = "GARANTI";
+                break;
+            default:
+                System.out.println("⚠️ Banka tanımsız: " + banka);
+                bankText = banka.toUpperCase();
+                break;
+        }
 
         By bankCell = AppiumBy.xpath(
                 "//android.widget.TextView[@resource-id='com.pax.techpos:id/grid_text' and @text='" + bankText + "']/.."
@@ -796,22 +844,21 @@ public class StepDefinitions {
         System.out.println("✅ Banka seçildi: " + bankText);
     }
 
-
     @When("kullanici samplesale uzerinden {int} tutar girer \\(iptal)")
     public void kullaniciSamplesaleUzerindenTutarGirerIptal(int tutar) {
 
         ReusableMethods.iwait()
-                .until(ExpectedConditions.visibilityOf(sampleSalePage.txtIptalTutar))
+                .until(ExpectedConditions.visibilityOf(salePage.txtIptalTutar))
                 .click();
-        sampleSalePage.txtIptalTutar.sendKeys(String.valueOf(tutar));
+        salePage.txtIptalTutar.sendKeys(String.valueOf(tutar));
 
 
     }
 
     @And("kullanici Garanti1 kart no girer")
     public void kullaniciGarantiKartNoGirer() {
-        sampleSalePage.txtStanNo.click();
-        sampleSalePage.txtStanNo.sendKeys(ConfigReader.getProperty("garantiBank1KartNo"));
+        salePage.txtStanNo.click();
+        salePage.txtStanNo.sendKeys(ConfigReader.getProperty("garantiBank1KartNo"));
 
     }
 
@@ -832,24 +879,26 @@ public class StepDefinitions {
 
     @And("kullanici puan {int} girisi yapar")
     public void kullaniciPuanGirisiYapar(int puan) {
-
-
         try {
-            if (techPos.txtTechposAmountText.isDisplayed()) {
+            if (techPos.lblIlkPuanPoup.isDisplayed()) {
+                int n = 3;
+                while (n > 0) {
+                    System.out.println("puan popup mesajının geçmesi bekleniyor");
+                    ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(techPos.lblIlkPuanPoup)).click();
 
-                System.out.println("puan popup mesajının geçmesi bekleniyor");
-                Thread.sleep(11000);
-                techPos.txtTechposAmountText.sendKeys(String.valueOf(puan));
-                techPos.btnTechposGiris.click();
+                    techPos.lblPuanEkranaBas.click();
+                    ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(techPos.txtTechposAmountText)).click();
 
+                    techPos.txtTechposAmountText.sendKeys(String.valueOf(puan));
+                    techPos.btnTechposGiris.click();
+
+                    n--;
+                }
 
             }
-
         } catch (Exception ignored) {
-
-
         }
-
+        techPos.btnTechposGiris.click();
 
     }
 
@@ -865,12 +914,17 @@ public class StepDefinitions {
 
             case "halkbank1":
 
-                techPosPage.txtKartNoGiriniz.sendKeys(ConfigReader.getProperty("halkbank1ComboKartNoKK"));
+                techPos.txtKartNoGiriniz.sendKeys(ConfigReader.getProperty("halkbank1ComboKartNoKK"));
 
                 break;
 
             case "garanti1":
                 techPos.txtKartNoGiriniz.sendKeys(ConfigReader.getProperty("garantiBank1KartNo"));
+                break;
+
+            case "vakif1":
+                techPos.txtKartNoGiriniz.sendKeys(ConfigReader.getProperty("vakif1kkNo"));
+        break;
         }
 
 
@@ -881,10 +935,14 @@ public class StepDefinitions {
     public void kullaniciTechposSktGirer(String banka) {
         switch (banka) {
             case "halkbank1":
-                techPosPage.txtSKT.sendKeys(ConfigReader.getProperty("halkbank1ComboSKT"));
+                techPos.txtSKT.sendKeys(ConfigReader.getProperty("halkbank1ComboSKT"));
                 break;
             case  "garanti1":
-                techPosPage.txtSKT.sendKeys(ConfigReader.getProperty("garantiBank1SKT"));
+                techPos.txtSKT.sendKeys(ConfigReader.getProperty("garantiBank1SKT"));
+                break;
+            case "vakif1":
+                techPos.txtSKT.sendKeys(ConfigReader.getProperty("vakif1SKTno"));
+                break;
         }
     }
 
@@ -892,26 +950,23 @@ public class StepDefinitions {
     public void kullaniciTechposCvvGirer(String banka) {
 
         switch (banka){
-        case "halkbank1":
-            techPosPage.txtCCV.sendKeys(ConfigReader.getProperty("halkbank1ComboCcvKK"));
+            case "halkbank1":
+                techPos.txtCCV.sendKeys(ConfigReader.getProperty("halkbank1ComboCcvKK"));
+                break;
 
 
             case "garanti1":
-                techPosPage.txtCCV.sendKeys(ConfigReader.getProperty("garantiBank1CCV"));
+                techPos.txtCCV.sendKeys(ConfigReader.getProperty("garantiBank1CCV"));
+                break;
+
+            case "vakif1":
+                techPos.txtCCV.sendKeys(ConfigReader.getProperty("vakif1CCV"));
+                break;
 
 
 
-      try {
-          techPosPage.txtTechposAmountText.sendKeys(ConfigReader.getProperty("halkbank1ComboCcvKK"));
 
-          techPosPage.btnGiris.isDisplayed();
-          techPosPage.btnGiris.click();
-          Thread.sleep(8000);
 
-      }catch (Exception e){
-
-      }
-      break;
         }
 
 
@@ -922,8 +977,8 @@ public class StepDefinitions {
 
     @Then("kullanici techpos giris tusuna basar")
     public void kullaniciTechposGirisTusunaBasar() throws InterruptedException {
-        techPosPage.btnGiris.isDisplayed();
-        techPosPage.btnGiris.click();
+        techPos.btnGiris.isDisplayed();
+        techPos.btnGiris.click();
         Thread.sleep(8000);
 
 
@@ -935,12 +990,12 @@ public class StepDefinitions {
         // Burada da kilitlenmeyelim: switch yap, paket techpos ise dene; değilse yine de click dene.
         ReusableMethods.switchToApp("com.pax.techpos");
 
-        System.out.println("PKG=" + driver.getCurrentPackage());
-        System.out.println("ACT=" + driver.currentActivity());
+        System.out.println("PKG=" + ReusableMethods.driver.getCurrentPackage());
+        System.out.println("ACT=" + ReusableMethods.driver.currentActivity());
 
         // 1) Önce mevcut POM elementini dene
         try {
-            techPosPage.btnMKE.click();
+            techPos.btnMKE.click();
             System.out.println("✅ btnMKE tıklandı (POM)");
             return;
         } catch (Exception ignored) {
@@ -956,7 +1011,7 @@ public class StepDefinitions {
     @Given("kullanici iade secimi yapar")
     public void kullaniciIadeSecimiYapar() {
 
-        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(sampleSalePage.btnIade)).click();
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(salePage.btnIade)).click();
 
 
     }
@@ -965,67 +1020,92 @@ public class StepDefinitions {
     public void kullaniciSonIslemReferansNumarasiGirer() {
 
         ReusableMethods.iwait()
-                .until(ExpectedConditions.visibilityOf(sampleSalePage.txtBankRefNo))
+                .until(ExpectedConditions.visibilityOf(salePage.txtBankRefNo))
                 .click();
-        sampleSalePage.txtBankRefNo.sendKeys(String.valueOf(ConfigReader.getProperty("sonIslemBankaReferansNo")));
+        salePage.txtBankRefNo.sendKeys(String.valueOf(ConfigReader.getProperty("sonIslemBankaReferansNo")));
     }
 
 
 
     @And("kullanici manager {string} kart no girer")
     public void kullaniciManagerBankaKartNoGirer(String banka) {
-     switch (banka){
-         case "Garanti1":
+        switch (banka.toLowerCase()){
 
-             String card = ConfigReader.getProperty("garantiBank1KartNo");
 
-             iwait().until(ExpectedConditions.elementToBeClickable(managerPage.txtKartNo)).click();
-             managerPage.txtKartNo.clear();
-             managerPage.txtKartNo.sendKeys(card);
+
+
+            case "garanti1":
+                String card = ConfigReader.getProperty("garantiBank1KartNo");
+                ReusableMethods.closeKeyboard();
+                try {
+                    ReusableMethods.iwait().until(ExpectedConditions.elementToBeClickable(manager.txtKartNo)).click();
+                }catch (Exception e){
+                    System.out.println("Element bulunamadı txtKartNo");
+
+                }
+                manager.txtKartNo.clear();
+                manager.txtKartNo.click();
+
+
+                manager.txtKartNo.sendKeys(card);
+
+
 
 // ✅ kontrol
-             String typed = managerPage.txtKartNo.getText();
-             if (typed == null || typed.isBlank()) {
-                 // custom keypad/secure input -> sendKeys yemedi
-                 java.util.Map<String, Object> args = new java.util.HashMap<>();
-                 args.put("command", "input");
-                 args.put("args", java.util.Arrays.asList("text", card));
-                 ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("mobile: shell", args);
-             }
-             break;
+                String typed = manager.txtKartNo.getText();
+                if (typed == null || typed.isBlank()) {
+                    // custom keypad/secure input -> sendKeys yemedi
+                    java.util.Map<String, Object> args = new java.util.HashMap<>();
+                    args.put("command", "input");
+                    args.put("args", java.util.Arrays.asList("text", card));
+                    ((org.openqa.selenium.JavascriptExecutor) ReusableMethods.driver).executeScript("mobile: shell", args);
+                }
+                break;
 
-     }
+            case "vakif1" :
+                manager.txtKartNo.clear();
+                manager.txtKartNo.click();
+                manager.txtKartNo.sendKeys(ConfigReader.getProperty("vakif1kkNo"));
+                break;
+
+        }
 
     }
 
     @And("kullanici manager {string} skt girer")
     public void kullaniciManagerSktGirer(String banka) {
-      switch (banka){
+        switch (banka.toLowerCase()){
 
-          case "Garanti1":
-              iwait().until(ExpectedConditions.visibilityOf(managerPage.txtSKT)).click();
-              managerPage.txtSKT.clear();
-              managerPage.txtSKT.sendKeys(ConfigReader.getProperty("garantiBank1SKT"));
-              break;
-      }
+            case "garanti1":
+                ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtSKT)).click();
+                manager.txtSKT.clear();
+                manager.txtSKT.sendKeys(ConfigReader.getProperty("garantiBank1SKT"));
+                break;
+
+            case"vakif1":
+
+                ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtSKT)).click();
+                manager.txtSKT.clear();
+                manager.txtSKT.sendKeys(ConfigReader.getProperty("vakif1SKTno"));
+                break;
+        }
     }
 
     @And("kullanici manager {string} cvv girer")
     public void kullaniciManagerCvvGirer(String banka) {
 
-        switch (banka){
-            case "Garanti1":
-                iwait().until(ExpectedConditions.visibilityOf(managerPage.txtCVV)).click();
-                managerPage.txtCVV.clear();
-                managerPage.txtCVV.sendKeys(ConfigReader.getProperty("garantiBank1CCV"));
+        switch (banka.toLowerCase()){
+            case "garanti1":
+                ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtCVV)).click();
+                manager.txtCVV.clear();
+                manager.txtCVV.sendKeys(ConfigReader.getProperty("garantiBank1CCV"));
                 break;
+            case "vakif1":
+                ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(manager.txtCVV)).click();
+                manager.txtCVV.clear();
+                manager.txtCVV.sendKeys(ConfigReader.getProperty("vakif1CCV"));
+
         }
 
     }
 }
-
-
-
-
-
-

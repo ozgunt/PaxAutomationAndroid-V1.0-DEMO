@@ -4,6 +4,7 @@ import io.cucumber.java.*;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.Logger;
 import utilities.LoggerUtil;
+import utilities.PageContext;
 import utilities.ScreenshotUtil;
 import utilities.ReusableMethods;
 import utilities.LogcatUtility;
@@ -21,17 +22,22 @@ public class TestHooks {
         LoggerUtil.getLogger().info("=== TEST SUITE BAŞLADI ===");
     }
 
-    @Before
+    @Before(order = 1)
     public void beforeScenario(Scenario scenario) {
         ThreadContext.put("scenario", "[" + scenario.getName() + "]");
         logger.info("Senaryo başladı: {}", scenario.getName());
-        logcatStarted = false;  // yeni senaryo için reset
+        logcatStarted = false;
     }
 
     @BeforeStep
     public void beforeStep(Scenario scenario) {
 
-        // Logcat sadece İLK step'te başlasın
+        // Driver varsa null olan page object'leri reinit et
+        if (ReusableMethods.driver != null) {
+            PageContext.reinitIfNull(ReusableMethods.driver);
+        }
+
+        // Logcat sadece ilk step'te başlasın
         if (!logcatStarted) {
             try {
                 LogcatUtility.startLogcat(scenario.getName());
@@ -42,6 +48,8 @@ public class TestHooks {
             }
         }
     }
+
+
 
     @AfterStep
     public void afterStep(Scenario scenario) {
@@ -58,6 +66,7 @@ public class TestHooks {
 
         if (scenario.isFailed()) {
             logger.error("❌ Senaryo FAIL → {}", scenario.getName());
+            ReusableMethods.quitDriver();
         } else {
             logger.info("✅ Senaryo PASS → {}", scenario.getName());
         }

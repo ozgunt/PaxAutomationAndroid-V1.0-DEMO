@@ -35,4 +35,5 @@
   "appium:appPackage": "com.pax.techpos",
   "appium:appActivity": ".StarterActivity",
   "appium:noReset": true
+
 }

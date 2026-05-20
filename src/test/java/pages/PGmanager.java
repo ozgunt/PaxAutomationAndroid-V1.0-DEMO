@@ -33,7 +33,7 @@ public class PGmanager {
     @AndroidFindBy(xpath = "//android.widget.Button[@resource-id=\"com.pax.mainapp:id/button4\"]")
     public WebElement btnMke;
 
-    @AndroidFindBy(xpath = "//android.widget.EditText[@resource-id=\"com.pax.mainapp:id/cardno\"]")
+    @AndroidFindBy(id = "com.pax.mainapp:id/cardno")
     public WebElement txtKartNo;
 
     // ----------- TEXTBOX ELEMENTLERİ -----------

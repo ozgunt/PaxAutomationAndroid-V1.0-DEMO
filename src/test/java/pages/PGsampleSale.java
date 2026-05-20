@@ -75,6 +75,8 @@ public class PGsampleSale {
 
     @AndroidFindBy (xpath = "//android.widget.Button[@resource-id=\"com.pax.samplesalea:id/iptalBtn\"]")
     public WebElement btnIptal;
+    @AndroidFindBy(id = "com.pax.samplesalea:id/iadeBtn")
+    public WebElement btnIadeIslemBTN;
 
     // ----------- TEXTBOX ELEMENTLERİ -----------
 

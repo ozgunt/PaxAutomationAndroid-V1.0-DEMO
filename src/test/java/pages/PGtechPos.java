@@ -33,7 +33,7 @@ public class PGtechPos {
 
 
     //techpos genel giriş buttonu locate
-    @AndroidFindBy(xpath = "//android.widget.Button[@index='14']")
+    @AndroidFindBy(xpath = "//android.widget.Button[@text=\"GİRİŞ\"]")
     public WebElement  btnTechposGiris;
     // Techpos merchant menü elementleri
 
@@ -210,6 +210,12 @@ public class PGtechPos {
 
     @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/header\"]")
     public WebElement lblHeader;
+
+    @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/tv_title\"]")
+    public WebElement lblIlkPuanPoupxpath;
+
+    @AndroidFindBy(xpath = "//android.widget.TextView[@resource-id=\"com.pax.techpos:id/title\"]")
+    public WebElement lblPuanEkranaBas ;
 
 
 

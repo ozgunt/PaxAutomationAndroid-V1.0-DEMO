@@ -5,6 +5,7 @@ import org.junit.platform.suite.api.*;
 
 import static io.cucumber.junit.platform.engine.Constants.FILTER_TAGS_PROPERTY_NAME;
 import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
+import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 
 @Suite
 @IncludeEngines("cucumber")
@@ -15,11 +16,15 @@ import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
 )
 @ConfigurationParameter(
         key = FILTER_TAGS_PROPERTY_NAME,
-        value = "@TestRun"
+        value = "@run"
 )
 @ConfigurationParameter(
-        key= Constants.EXECUTION_DRY_RUN_PROPERTY_NAME,
+        key = Constants.EXECUTION_DRY_RUN_PROPERTY_NAME,
         value = "false"
+)
+@ConfigurationParameter(
+        key = PLUGIN_PROPERTY_NAME,
+        value = "io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm, json:target/cucumber-reports/cucumber.json, pretty"
 )
 public class Runner {
 

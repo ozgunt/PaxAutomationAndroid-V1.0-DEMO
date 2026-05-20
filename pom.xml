@@ -12,10 +12,32 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- ✅ Allure ve AspectJ Versiyonları Eklendi -->
-        <allure.version>2.24.0</allure.version>
-        <aspectj.version>1.9.20.1</aspectj.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-java</artifactId>
+                <version>4.23.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-api</artifactId>
+                <version>4.23.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-remote-driver</artifactId>
+                <version>4.23.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-support</artifactId>
+                <version>4.23.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -24,18 +46,21 @@
             <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
             <version>1.10.2</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite</artifactId>
@@ -43,66 +68,48 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- ✅ Allure Cucumber Bağımlılığı Eklendi -->
-        <dependency>
-            <groupId>io.qameta.allure</groupId>
-            <artifactId>allure-cucumber7-jvm</artifactId>
-            <version>${allure.version}</version>
-        </dependency>
-
+        <!-- Java Faker (modern fork - DataFaker) -->
         <dependency>
             <groupId>net.datafaker</groupId>
             <artifactId>datafaker</artifactId>
             <version>2.3.1</version>
         </dependency>
 
+        <!-- Appium Java Client 9.2.2 -->
         <dependency>
             <groupId>io.appium</groupId>
             <artifactId>java-client</artifactId>
-            <version>8.3.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.seleniumhq.selenium</groupId>
-                    <artifactId>selenium-java</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.seleniumhq.selenium</groupId>
-                    <artifactId>selenium-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.seleniumhq.selenium</groupId>
-                    <artifactId>selenium-remote-driver</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.seleniumhq.selenium</groupId>
-                    <artifactId>selenium-support</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>9.2.2</version>
         </dependency>
 
+        <!-- Selenium 4.23.0 - sabitlendi -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>4.10.0</version>
+            <version>4.23.0</version>
         </dependency>
 
+        <!-- Apache POI (Excel işlemleri için) -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
             <version>5.3.0</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.3.0</version>
         </dependency>
 
+        <!-- Cucumber (JUnit 5 uyumlu versiyonlar) -->
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
             <version>7.14.0</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-junit-platform-engine</artifactId>
@@ -116,41 +123,73 @@
             <version>2.0.7</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>2.22.1</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>2.22.1</version>
         </dependency>
+
+        <!-- Allure Cucumber JUnit5 -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-cucumber7-jvm</artifactId>
+            <version>2.27.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-junit5</artifactId>
+            <version>2.27.0</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
         <plugins>
-            <!-- ✅ Surefire Plugin Allure Ayarlarıyla Güncellendi -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.3.1</version>
                 <configuration>
-                    <argLine>
-                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
-                    </argLine>
-                    <systemPropertyVariables>
-                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
-                    </systemPropertyVariables>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>io.qameta.allure.junit5.AllureJunit5</value>
+                        </property>
+                    </properties>
+                    <statelessTestsetReporter
+                            implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                        <disable>false</disable>
+                        <version>3.0</version>
+                        <usePhrasedFileName>false</usePhrasedFileName>
+                        <usePhrasedTestSuiteClassName>true</usePhrasedTestSuiteClassName>
+                        <usePhrasedTestCaseClassName>true</usePhrasedTestCaseClassName>
+                        <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                    </statelessTestsetReporter>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.aspectj</groupId>
-                        <artifactId>aspectjweaver</artifactId>
-                        <version>${aspectj.version}</version>
-                    </dependency>
-                </dependencies>
+            </plugin>
+
+            <!-- Allure Maven Plugin -->
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.12.0</version>
+                <configuration>
+                    <reportVersion>2.27.0</reportVersion>
+                    <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
+                </configuration>
             </plugin>
         </plugins>
     </build>
+
 </project>
