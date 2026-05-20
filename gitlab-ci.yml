@@ -1,0 +1,85 @@
+image: maven:3.6.3-jdk-11
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  APPIUM_URL: "http://127.0.0.1:4723"
+
+stages:
+  - build
+  - quality
+  - test
+  - package
+  - deploy
+
+cache:
+  paths:
+    - .m2/repository
+
+compile_project:
+  stage: build
+  tags:
+    - pos-runner
+  script:
+    - mvn clean compile $MAVEN_OPTS
+
+code_quality:
+  stage: quality
+  tags:
+    - pos-runner
+  script:
+    - mvn checkstyle:check || echo "Stil hatasi"
+  allow_failure: true
+
+pos_automation_tests:
+  stage: test
+  tags:
+    - pos-runner
+  script:
+    - mvn test $MAVEN_OPTS
+  allow_failure: true
+  artifacts:
+    when: always
+    name: "test-results-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - target/surefire-reports/
+      - target/allure-results/
+      - target/cucumber-reports/
+      - logs/
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+    expire_in: 30 days
+
+build_package:
+  stage: package
+  tags:
+    - pos-runner
+  script:
+    - mvn package -DskipTests $MAVEN_OPTS
+
+pages:
+  stage: deploy
+  tags:
+    - pos-runner
+  image: frankescobar/allure-docker-service
+  script:
+    - allure generate target/allure-results -o public --clean
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  needs:
+    - pos_automation_tests
+
+deployment_status:
+  stage: deploy
+  tags:
+    - pos-runner
+  script:
+    - echo "Pipeline tamamlandi"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  needs:
+    - pos_automation_tests
