@@ -7,7 +7,12 @@
   "appium:noReset": true
 }
 
-
+git commit -m "allure-cucumber allure plugin eklendi.
+              test senaryoları US TC tekrardan düzenlendi.
+              Proje Appium3 e entegre edildi.
+              Optimizasyon yapıldı; Performans problemleri çözüldü.
+              Test Hooks driver PG null kontrolü eklendi.
+              Satış günsonu iade caseleri fix edildi."
 
 
 
