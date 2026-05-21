@@ -31,7 +31,17 @@ pos_automation_tests:
   tags:
     - pos-runner
   script:
-    - mvn test -Dappium.url=$APPIUM_URL
+    - echo "Test Filtresi Kontrol Ediliyor -> $TEST_FILTER"
+    - |
+      if [ -z "$TEST_FILTER" ]; then
+        mvn test -Dappium.url=$APPIUM_URL
+      elif [[ "$TEST_FILTER" == @* ]]; then
+        echo "Cucumber Tagi Algılandı!"
+        mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$TEST_FILTER"
+      else
+        echo "Standart Java Test/Metot Filtresi Algılandı!"
+        mvn test -Dappium.url=$APPIUM_URL -Dtest="$TEST_FILTER"
+      fi
   allow_failure: true
   artifacts:
     when: always
