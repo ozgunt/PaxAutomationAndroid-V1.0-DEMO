@@ -14,7 +14,6 @@ public class TestHooks {
 
     private static final Logger logger = LoggerUtil.getLogger();
 
-    // Logcat'in sadece 1 kere başlaması için
     private boolean logcatStarted = false;
 
     @BeforeAll
@@ -31,21 +30,21 @@ public class TestHooks {
 
     @Before(order = 0)
     public void ensureSampleSale() throws Exception {
-        if (ReusableMethods.driver == null) return;
+        if (ReusableMethods.driver == null) {
+            PageContext.setUp();
+            return;
+        }
         String currentPkg = ReusableMethods.driver.getCurrentPackage();
         if (!"com.pax.samplesalea".equals(currentPkg)) {
-            PageContext.setUp();        }
+            PageContext.setUp();
+        }
     }
 
     @BeforeStep
     public void beforeStep(Scenario scenario) {
-
-        // Driver varsa null olan page object'leri reinit et
         if (ReusableMethods.driver != null) {
             PageContext.reinitIfNull(ReusableMethods.driver);
         }
-
-        // Logcat sadece ilk step'te başlasın
         if (!logcatStarted) {
             try {
                 LogcatUtility.startLogcat(scenario.getName());
@@ -56,8 +55,6 @@ public class TestHooks {
             }
         }
     }
-
-
 
     @AfterStep
     public void afterStep(Scenario scenario) {
@@ -71,22 +68,18 @@ public class TestHooks {
 
     @After
     public void afterScenario(Scenario scenario) {
-
         if (scenario.isFailed()) {
             logger.error("❌ Senaryo FAIL → {}", scenario.getName());
             ReusableMethods.quitDriver();
         } else {
             logger.info("✅ Senaryo PASS → {}", scenario.getName());
         }
-
-        // RAW logu kapat ve kategorilere ayır
         String rawPath = LogcatUtility.stopLogcat();
         try {
             LogFilter.processRawLog(rawPath, scenario.getName(), scenario.isFailed());
         } catch (Exception e) {
             logger.error("LogFilter çalışırken hata oluştu", e);
         }
-
         ThreadContext.clearAll();
     }
 

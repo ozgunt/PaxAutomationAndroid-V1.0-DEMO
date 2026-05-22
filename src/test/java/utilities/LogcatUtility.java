@@ -22,10 +22,9 @@ public class LogcatUtility {
         String safeName = scenarioName.replaceAll("[^a-zA-Z0-9._-]", "_");
         currentRawLogPath = logDir + "/" + safeName + "_" + System.currentTimeMillis() + ".log";
 
-        // Clear logcat buffer to start fresh for this scenario
         ProcessBuilder pbClear = new ProcessBuilder("adb", "logcat", "-c");
         Process clearProcess = pbClear.start();
-        boolean cleared = clearProcess.waitFor(5, TimeUnit.SECONDS);
+        boolean cleared = clearProcess.waitFor(2, TimeUnit.SECONDS);
         if (!cleared) {
             clearProcess.destroyForcibly();
         }
@@ -52,7 +51,7 @@ public class LogcatUtility {
             pbDump.redirectOutput(new File(currentRawLogPath));
 
             Process dumpProcess = pbDump.start();
-            boolean dumped = dumpProcess.waitFor(10, TimeUnit.SECONDS);
+            boolean dumped = dumpProcess.waitFor(3, TimeUnit.SECONDS);
             if (!dumped) {
                 dumpProcess.destroyForcibly();
             }

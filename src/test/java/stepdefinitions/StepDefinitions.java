@@ -35,6 +35,8 @@ import java.security.spec.ECField;
 import java.sql.Driver;
 import java.time.Duration;
 
+import static utilities.ReusableMethods.driver;
+
 
 public class StepDefinitions {
 
@@ -66,7 +68,7 @@ public class StepDefinitions {
         ReusableMethods.swipeUp();
 
         //ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(salePage.lstMenuAc)).click();
-        new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(2))
+        new WebDriverWait(driver, Duration.ofSeconds(2))
                 .until(ExpectedConditions.visibilityOfElementLocated(
                         AppiumBy.id("com.pax.samplesalea:id/menuSpinner")
                 ))
@@ -128,18 +130,18 @@ public class StepDefinitions {
 
     @Then("Kullanici kurulum bilgisi girer")
     public void kullanici_kurulum_bilgisi_girer() {
-        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
 
         boolean isSeriNoEkraniAcik;
         try {
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
+            new WebDriverWait(driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.lblSeriNumarasiGiriniz));
             isSeriNoEkraniAcik = true;
         } catch (Exception e) {
             isSeriNoEkraniAcik = false;
         }
 
-        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
         if (isSeriNoEkraniAcik) {
             System.out.println("📌 Seri No ekranı geldi → Doğrulama gerekir!");
@@ -149,7 +151,7 @@ public class StepDefinitions {
             techPos.btnTechposGiris.click();
 
 
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(7))
+            new WebDriverWait(driver, Duration.ofSeconds(7))
                     .until(ExpectedConditions.elementToBeClickable(
                             AppiumBy.xpath("//android.widget.Button[@index='14']")));
             techPos.txtTechposGenelBox.click();
@@ -158,7 +160,7 @@ public class StepDefinitions {
             techPos.btnTechposGiris.click();
         } else {
             System.out.println("📌 Seri No ekranı gelmedi → Direkt IP giriş ekranı!");
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
+            new WebDriverWait(driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.txtIpGiriniz1));
         }
 
@@ -195,7 +197,7 @@ public class StepDefinitions {
     public void kullaniciGunsonuSecimiYapar() throws InterruptedException {
 
 
-        WebDriverWait wait = new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(20)); // 20 saniye bekle
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20)); // 20 saniye bekle
         wait.until(ExpectedConditions.visibilityOf(techPos.btnGunsonu)).click(); // Görünürse tıkla
         wait.until(ExpectedConditions.visibilityOf(techPos.getBtnGunsonuDetay)).click(); // Görünürse tıkla
 
@@ -207,7 +209,7 @@ public class StepDefinitions {
     public void kullanici_techpos_secimi_yapar() {
 
         try {
-            WebDriverWait fastWait = new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(1));
+            WebDriverWait fastWait = new WebDriverWait(driver, Duration.ofSeconds(1));
             WebElement techPosButton = fastWait.until(
                     ExpectedConditions.visibilityOfElementLocated(
                             AppiumBy.xpath("//*[@text='TechPOS']")
@@ -220,7 +222,7 @@ public class StepDefinitions {
         }
 
         // ✅ DOĞRU YER: Geçişten sonra aktif package logu
-        String pkg = ReusableMethods.driver.getCurrentPackage();
+        String pkg = driver.getCurrentPackage();
         System.out.println("📌 Gerçek Aktif Package: " + pkg);
     }
 
@@ -308,7 +310,7 @@ public class StepDefinitions {
                 java.util.Map<String, Object> args = new java.util.HashMap<>();
                 args.put("command", "input");
                 args.put("args", java.util.Arrays.asList("text", card));
-                ReusableMethods.driver.executeScript("mobile: shell", args);
+                driver.executeScript("mobile: shell", args);
             }
         } catch (Exception e) {
             System.out.println("⚠️ getText kontrol hatası, devam ediliyor: " + e.getMessage());
@@ -327,7 +329,7 @@ public class StepDefinitions {
                 java.util.Map<String, Object> args = new java.util.HashMap<>();
                 args.put("command", "input");
                 args.put("args", java.util.Arrays.asList("text", skt));
-                ReusableMethods.driver.executeScript("mobile: shell", args);
+                driver.executeScript("mobile: shell", args);
             }
         } catch (Exception e) {
             System.out.println("⚠️ getText kontrol hatası, devam ediliyor: " + e.getMessage());
@@ -346,7 +348,7 @@ public class StepDefinitions {
                 java.util.Map<String, Object> args = new java.util.HashMap<>();
                 args.put("command", "input");
                 args.put("args", java.util.Arrays.asList("text", cvv));
-                ReusableMethods.driver.executeScript("mobile: shell", args);
+                driver.executeScript("mobile: shell", args);
             }
         } catch (Exception e) {
             System.out.println("⚠️ getText kontrol hatası, devam ediliyor: " + e.getMessage());
@@ -372,7 +374,7 @@ public class StepDefinitions {
             } catch (org.openqa.selenium.StaleElementReferenceException e) {
                 System.out.println("⚠️ Slip elementi stale oldu → yeniden kontrol ediliyor...");
                 try {
-                    WebElement slip = ReusableMethods.driver.findElement(AppiumBy.id("com.pax.samplesalea:id/lblSlip"));
+                    WebElement slip = driver.findElement(AppiumBy.id("com.pax.samplesalea:id/lblSlip"));
                     slip.click();
                     System.out.println("📄 Slip yeniden bulundu ve tıklandı");
                 } catch (Exception inner) {
@@ -426,39 +428,33 @@ public class StepDefinitions {
 
     @And("kullanici islem basarili mesaji sonrasi tamam tusuna basar")
     public void kullaniciIslemBasariliMesajiSonrasiTamamTusunaBasar() {
-
-
-        // ✅ techPos objesi null mı? -> asıl NPE sebebi burada
         if (salePage == null) {
             throw new RuntimeException("techPosPage null. setUp() çağrılmamış veya PGtechPos init olmamış.");
         }
-
-
         try {
-            ReusableMethods.iwait()
-                    .until(ExpectedConditions.elementToBeClickable(salePage.btnTamamIslemBasarili));
-            salePage.btnTamamIslemBasarili.click();
+            new WebDriverWait(driver, Duration.ofSeconds(15))
+                    .until(ExpectedConditions.elementToBeClickable(salePage.btnTamamIslemBasarili))
+                    .click();
             System.out.println("✅ İşlem başarılı popup 'Tamam' tıklandı");
         } catch (Exception e) {
             System.out.println("ℹ️ İşlem başarılı popup gelmedi → devam ediliyor");
         }
     }
 
-
     @And("Kullanici cihazi kendi serisine kurar")
     public void kullaniciCihaziKendiSerisineKurar() {
-        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
 
         boolean isSeriNoEkraniAcik;
         try {
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
+            new WebDriverWait(driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.lblSeriNumarasiGiriniz));
             isSeriNoEkraniAcik = true;
         } catch (Exception e) {
             isSeriNoEkraniAcik = false;
         }
 
-        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
         if (isSeriNoEkraniAcik) {
             System.out.println("📌 Seri No ekranı geldi → Doğrulama gerekir!");
@@ -466,14 +462,14 @@ public class StepDefinitions {
             techPos.btnTechposGiris.click();
 
 
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(5))
+            new WebDriverWait(driver, Duration.ofSeconds(5))
                     .until(ExpectedConditions.elementToBeClickable(
                             AppiumBy.xpath("//android.widget.Button[@index='14']")));
 
             techPos.btnTechposGiris.click();
         } else {
             System.out.println("📌 Seri No ekranı gelmedi → Direkt IP giriş ekranı!");
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
+            new WebDriverWait(driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.txtIpGiriniz1));
         }
 
@@ -505,18 +501,18 @@ public class StepDefinitions {
     public void kullaniciYanlisSeriNoGirer() {
 
 
-        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
 
         boolean isSeriNoEkraniAcik;
         try {
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3))
+            new WebDriverWait(driver, Duration.ofSeconds(3))
                     .until(ExpectedConditions.visibilityOf(techPos.lblSeriNumarasiGiriniz));
             isSeriNoEkraniAcik = true;
         } catch (Exception e) {
             isSeriNoEkraniAcik = false;
         }
 
-        ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
         if (isSeriNoEkraniAcik) {
             System.out.println("📌 Seri No ekranı geldi → Doğrulama gerekir!");
@@ -526,7 +522,7 @@ public class StepDefinitions {
             techPos.btnTechposGiris.click();
 
 
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(5))
+            new WebDriverWait(driver, Duration.ofSeconds(5))
                     .until(ExpectedConditions.elementToBeClickable(
                             AppiumBy.xpath("//android.widget.Button[@index='14']")));
             techPos.txtTechposGenelBox.click();
@@ -584,7 +580,7 @@ public class StepDefinitions {
 
         for (int i = 0; i < 2; i++) {
             try {
-                WebDriverWait wait = new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3));
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
 
                 wait.until(ExpectedConditions.visibilityOf(techPos.txtTechposGenelBox));
 
@@ -612,13 +608,13 @@ public class StepDefinitions {
             }
         }
 
-        System.out.println("📌 Gerçek Aktif Package: " + ReusableMethods.driver.getCurrentPackage());
+        System.out.println("📌 Gerçek Aktif Package: " + driver.getCurrentPackage());
     }
 
     @When("kullanici samplesale uzerinden transaction menuye giris yapar")
     public void kullaniciSamplesaleUzerindenTransactionMenuyeGirisYapar() {
 
-        if (salePage == null) salePage = new PGsampleSale(ReusableMethods.driver);
+        if (salePage == null) salePage = new PGsampleSale(driver);
 
         ReusableMethods.switchToApp("com.pax.samplesalea");
         ReusableMethods.driverWaitForApp();
@@ -645,7 +641,7 @@ public class StepDefinitions {
 
     @And("kullanici transaction menude bulunan elementlerin gorunurlugunu test eder")
     public void kullaniciTransactionMenudeBulunanElementlerinGorunurlugunuTestEder() {
-        if (techPos == null) techPos = new PGtechPos(ReusableMethods.driver);
+        if (techPos == null) techPos = new PGtechPos(driver);
         ReusableMethods.assertElementVisible("Transaction menude Satış buttonu görüldü", techPos.btnSatisIslemi);
         ReusableMethods.assertElementVisible("Transaction menude Taksitli satış buttonu görüldü", techPos.btnTaksitliSatisIslemi);
         ReusableMethods.assertElementVisible("Transaction menude puan kullanımı buttonu görüldü", techPos.btnPuanKullanimiIslemi);
@@ -671,7 +667,7 @@ public class StepDefinitions {
 
     @When("kullanici sample sale ekranini gorur")
     public void kullaniciSampleSaleEkraniniGorur() throws InterruptedException {
-        salePage = new PGsampleSale(ReusableMethods.driver);
+        salePage = new PGsampleSale(driver);
 
 
         System.out.println("⏳ Samplesale ana ekranı bekleniyor...");
@@ -710,7 +706,7 @@ public class StepDefinitions {
     public void kullaniciOflinePinGirer() {
         for (int i = 0; i < 2; i++) {
             try {
-                WebDriverWait wait = new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(3));
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
                 wait.until(ExpectedConditions.visibilityOf(techPos.lblOflinePinEkrani));
 
                 // 1 tuşunun merkezi
@@ -768,7 +764,7 @@ public class StepDefinitions {
         args.put("command", "input");
         args.put("args", java.util.Arrays.asList("tap", String.valueOf(x), String.valueOf(y)));
 
-        ((org.openqa.selenium.JavascriptExecutor) ReusableMethods.driver)
+        ((org.openqa.selenium.JavascriptExecutor) driver)
                 .executeScript("mobile: shell", args);
     }
 
@@ -802,16 +798,16 @@ public class StepDefinitions {
         ReusableMethods.switchToApp("com.pax.techpos");
 
         try {
-            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(10))
-                    .until(x -> "com.pax.techpos".equals(ReusableMethods.driver.getCurrentPackage()));
+            new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(x -> "com.pax.techpos".equals(driver.getCurrentPackage()));
         } catch (Exception ignored) {
         }
 
-        System.out.println("PKG=" + ReusableMethods.driver.getCurrentPackage());
-        System.out.println("ACT=" + ReusableMethods.driver.currentActivity());
+        System.out.println("PKG=" + driver.getCurrentPackage());
+        System.out.println("ACT=" + driver.currentActivity());
 
         By gridAny = AppiumBy.id("com.pax.techpos:id/grid_text");
-        if (ReusableMethods.driver.findElements(gridAny).isEmpty()) {
+        if (driver.findElements(gridAny).isEmpty()) {
             System.out.println("ℹ️ Bank listesi ekranı değil (grid_text yok) -> banka secimi ATLANDI");
             return;
         }
@@ -990,8 +986,8 @@ public class StepDefinitions {
         // Burada da kilitlenmeyelim: switch yap, paket techpos ise dene; değilse yine de click dene.
         ReusableMethods.switchToApp("com.pax.techpos");
 
-        System.out.println("PKG=" + ReusableMethods.driver.getCurrentPackage());
-        System.out.println("ACT=" + ReusableMethods.driver.currentActivity());
+        System.out.println("PKG=" + driver.getCurrentPackage());
+        System.out.println("ACT=" + driver.currentActivity());
 
         // 1) Önce mevcut POM elementini dene
         try {
@@ -1058,7 +1054,7 @@ public class StepDefinitions {
                     java.util.Map<String, Object> args = new java.util.HashMap<>();
                     args.put("command", "input");
                     args.put("args", java.util.Arrays.asList("text", card));
-                    ((org.openqa.selenium.JavascriptExecutor) ReusableMethods.driver).executeScript("mobile: shell", args);
+                    ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("mobile: shell", args);
                 }
                 break;
 

@@ -2,6 +2,7 @@ package utilities;
 
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import pages.PGmanager;
 import pages.PGsampleSale;
 import pages.PGtechPos;
@@ -67,6 +68,7 @@ public class PageContext {
         ReusableMethods.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
         init(ReusableMethods.driver);
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(sampleSalePage.txtTutar));
 
         System.out.println("✅ AndroidDriver başlatıldı → " + device.getName());
         System.out.println("✅ Açılan uygulama → " + activeAppKey);
