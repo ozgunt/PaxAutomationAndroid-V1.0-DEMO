@@ -22,44 +22,43 @@ stages:
 compile_project:
   stage: build
   script:
-    - mvn clean compile
+    # Git Bash'in Windows Maven'ı tanıyabilmesi için sonuna .cmd ekledik
+    - mvn.cmd clean compile
 
 pos_automation_tests:
   stage: test
   tags:
     - pos-runner
   before_script:
-    - echo "=== WINDOWS ORTAMINDA ALTYAPI HAZIRLIGI ==="
-    # 1. Arka planda kalmış eski Appium/Node süreçlerini temizler
-    - taskkill /F /IM node.exe /T || echo "Aktif node (Appium) sureci bulunamadi."
+    - echo "=== WINDOWS/BASH ORTAMINDA ALTYAPI HAZIRLIGI ==="
+    # 1. Arka planda kalmış eski Appium/Node süreçlerini temizler (Windows uyumlu)
+    - taskkill //F //IM node.exe //T || echo "Aktif node (Appium) sureci bulunamadi."
     # 2. Appium sunucusunu arka planda başlatıp tüm logları appium.log dosyasına yazar
     - echo "🚀 Appium Sunucusu Arka Planda Baslatiliyor..."
-    - start /B appium --log-level debug --log-no-colors > appium.log 2>&1
+    - start appium --log-level debug --log-no-colors > appium.log 2>&1
     # 3. Sunucunun açılması için 5 saniye bekletir
-    - ping 127.0.0.1 -n 6 > nul
+    - sleep 5
   script:
     - echo "=== TEST KOSUL SURECI BASLIYOR ==="
     - |
-      powershell -Command "
-      if ($env:SINGLE_TAG -ne '') {
-          Write-Host '🚀 SINGLE_TAG 1 kez kosuluyor -> ' $env:SINGLE_TAG;
-          mvn test -Dappium.url=$env:APPIUM_URL -Dcucumber.filter.tags=$env:SINGLE_TAG;
-      }
-      elseif ($env:LOOP_TAG -ne '') {
-          Write-Host '🔄 LOOP_TAG 1000 kez donguye giriyor -> ' $env:LOOP_TAG;
-          for ($i=1; $i -le 1000; $i++) {
-              Write-Host \"---------------- DONGU NO: $i / 1000 ----------------\";
-              mvn test -Dappium.url=$env:APPIUM_URL -Dcucumber.filter.tags=$env:LOOP_TAG;
-          }
-      }
-      else {
-          Write-Host '⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor...';
-          mvn test -Dappium.url=$env:APPIUM_URL;
-      }"
+      # Git Bash (Linux shell) mantığıyla koşul blokları
+      if [ -n "$SINGLE_TAG" ]; then
+          echo "🚀 SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
+          mvn.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
+      elif [ -n "$LOOP_TAG" ]; then
+          echo "🔄 LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
+          for i in {1..1000}; do
+              echo "---------------- DONGU NO: $i / 1000 ----------------"
+              mvn.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
+          done
+      else
+          echo "⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor..."
+          mvn.cmd test -Dappium.url=$APPIUM_URL
+      fi
   after_script:
     # Testler geçse de kalsa da üretilen son 100 satırlık Appium logunu GitLab paneline basar
     - echo "=== CRITIC APPIUM LOGS ==="
-    - if exist appium.log ( powershell -Command "Get-Content appium.log -Tail 100" ) else ( echo Appium log dosyasi olusturulamadi! )
+    - if [ -f appium.log ]; then tail -n 100 appium.log; else echo "Appium log dosyasi olusturulamadi!"; fi
   allow_failure: true
   artifacts:
     when: always
