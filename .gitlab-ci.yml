@@ -1,15 +1,20 @@
 spec:
   inputs:
-    test_filter_input:
+    single_tag_input:
       default: ""
-      description: "Çalıştırmak istediğiniz test metodunu veya Cucumber tag'ini girin. (Örn: @SmokeTest veya PaymentTests#testSale) Boş bırakılırsa tüm testler koşar."
+      description: "SADECE 1 KEZ çalışacak Cucumber tag'ini girin (Örn: @Login veya @Setup). Boş bırakılabilir."
+    loop_tag_input:
+      default: ""
+      description: "Arka arkaya 1000 KEZ döngüde çalışacak stres testi tag'ini girin (Örn: @SatisVeyaIptal). Boş bırakılabilir."
 ---
 image: maven:3.6.3-jdk-11
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   APPIUM_URL: "http://127.0.0.1:4723"
-  TEST_FILTER: "$[[ inputs.test_filter_input ]]"
+  # Arayüzden girilen inputları aşağıdaki scriptlerin anlayacağı değişkenlere bağlıyoruz
+  SINGLE_TAG: "$[[ inputs.single_tag_input ]]"
+  LOOP_TAG: "$[[ inputs.loop_tag_input ]]"
 
 stages:
   - build
@@ -38,19 +43,36 @@ pos_automation_tests:
   tags:
     - pos-runner
   script:
-    - echo "Fiziksel POS Bağlantısı Kontrol Ediliyor..."
-    - adb devices || echo "adb komutu veya bağlı cihaz bulunamadı, adımlara devam ediliyor..."
-    - echo "Test Filtresi Kontrol Ediliyor -> $TEST_FILTER"
+    - echo "Fiziksel POS Test Süreci Başlıyor..."
+    
+    # 1️⃣ ADIM: Eğer SINGLE_TAG tanımlandıysa sadece 1 Kere çalıştırır
     - |
-      if [ -z "$TEST_FILTER" ]; then
-        echo "Herhangi bir filtre algılanmadı, tüm testler koşturuluyor..."
-        mvn test -Dappium.url=$APPIUM_URL
-      elif [[ "$TEST_FILTER" == @* ]]; then
-        echo "Cucumber Tagi Algılandı! Koşturulacak Tag -> $TEST_FILTER"
-        mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$TEST_FILTER"
+      if [ -n "$SINGLE_TAG" ]; then
+        echo "🚀 SINGLE_TAG 1 kez koşturuluyor -> $SINGLE_TAG"
+        mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
       else
-        echo "Standart Java Test/Metot Filtresi Algılandı! Koşturulacak Test -> $TEST_FILTER"
-        mvn test -Dappium.url=$APPIUM_URL -Dtest="$TEST_FILTER"
+        echo "ℹ️ SINGLE_TAG boş bırakıldı, bu adım atlanıyor."
+      fi
+
+    # 2️⃣ ADIM: Eğer LOOP_TAG tanımlandıysa arka arkaya 1000 Kez döngüye sokar
+    - |
+      if [ -n "$LOOP_TAG" ]; then
+        echo "🔄 LOOP_TAG 1000 kez döngüsel teste giriyor -> $LOOP_TAG"
+        for i in {1..1000}; do
+          echo "========================================="
+          echo "       DÖNGÜ KOŞUSU: $i / 1000           "
+          echo "========================================="
+          mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
+        done
+      else
+        echo "ℹ️ LOOP_TAG boş bırakıldı, döngü testi yapılmayacak."
+      fi
+
+    # 3️⃣ ADIM: Eğer iki input alanı da boş bırakıldıysa standart akış (tüm testler) çalışır
+    - |
+      if [ -z "$SINGLE_TAG" ] && [ -z "$LOOP_TAG" ]; then
+        echo "⚠️ Herhangi bir özel döngü inputu girilmedi. Tüm testler sırasıyla koşturuluyor..."
+        mvn test -Dappium.url=$APPIUM_URL
       fi
   allow_failure: true
   artifacts:
@@ -67,6 +89,7 @@ build_package:
   script:
     - mvn package -DskipTests
 
+# ✅ Allure Raporunu oluşturan ve GitLab Pages'e gönderen kısım
 pages:
   stage: deploy
   image: frankescobar/allure-docker-service
