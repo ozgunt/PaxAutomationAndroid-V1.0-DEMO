@@ -6,13 +6,14 @@ spec:
     loop_tag_input:
       default: ""
       description: "Arka arkaya 1000 KEZ döngüde çalışacak stres testi tag'ini girin (Örn: @SatisVeyaIptal). Boş bırakılabilir."
+
 ---
+
 image: maven:3.6.3-jdk-11
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   APPIUM_URL: "http://127.0.0.1:4723"
-  # Arayüzden girilen inputları aşağıdaki scriptlerin anlayacağı değişkenlere bağlıyoruz
   SINGLE_TAG: "$[[ inputs.single_tag_input ]]"
   LOOP_TAG: "$[[ inputs.loop_tag_input ]]"
 
@@ -42,6 +43,22 @@ pos_automation_tests:
   stage: test
   tags:
     - pos-runner
+  before_script:
+    - echo "=== Appium ve Sürücü Kurulumu Başlıyor ==="
+    # 1. Node.js ve npm ortamını Docker içine kuruyoruz
+    - apt-get update && apt-get install -y curl gnupg
+    - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    - apt-get install -y nodejs
+    # 2. Appium ve UiAutomator2 sürücüsünü yüklüyoruz (UiAutomator2 sorusunun çözümü)
+    - npm install -g appium
+    - appium driver install uiautomator2
+    # 3. Appium'u arka planda başlatıyor ve logları 'appium.log' dosyasına yazıyoruz
+    - echo "🚀 Appium Server Başlatılıyor..."
+    - appium --log-level debug --log-no-colors > appium.log 2>&1 &
+    # Appium'un tamamen açılması için 5 saniye bekletiyoruz
+    - sleep 5
+    # Appium'un çalışıp çalışmadığını logdan kontrol etmek için ilk satırları basıyoruz
+    - head -n 20 appium.log
   script:
     - echo "Fiziksel POS Test Süreci Başlıyor..."
     
@@ -74,12 +91,17 @@ pos_automation_tests:
         echo "⚠️ Herhangi bir özel döngü inputu girilmedi. Tüm testler sırasıyla koşturuluyor..."
         mvn test -Dappium.url=$APPIUM_URL
       fi
+  after_script:
+    # Testler bitse de hata alsa da en son Appium loglarını terminale bas ki hata görünür olsun
+    - echo "=== APPIUM LOGLARI ==="
+    - cat appium.log || echo "Appium log dosyası bulunamadı."
   allow_failure: true
   artifacts:
     when: always
     paths:
       - target/surefire-reports/
       - target/allure-results/
+      - appium.log               # Log dosyasını GitLab arayüzünden indirebilmek için buraya ekledik
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
@@ -89,7 +111,6 @@ build_package:
   script:
     - mvn package -DskipTests
 
-# ✅ Allure Raporunu oluşturan ve GitLab Pages'e gönderen kısım
 pages:
   stage: deploy
   image: frankescobar/allure-docker-service
