@@ -1,4 +1,4 @@
-spec:
+ spec:
   inputs:
     single_tag_input:
       default: ""
@@ -9,9 +9,12 @@ spec:
 
 ---
 
+# 🚨 DOCKER KONTEYNERİNE MAVEN VE JAVA ALTYAPISINI ZORLA YÜKLÜYORUZ
+image: maven:3.6.3-jdk-11
+
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  # 🚨 DOCKER İÇİNDEN KENDİ BİLGİSAYARINIZDAKİ (HOST) APPIUM'A BAĞLANMAK İÇİN IP'Yİ GÜNCELLEDİK:
+  # 🚨 Docker içinden kendi bilgisayarınızdaki (Host) Appium'a bağlanma adresi
   APPIUM_URL: "http://host.docker.internal:4723"
   SINGLE_TAG: "$[[ inputs.single_tag_input ]]"
   LOOP_TAG: "$[[ inputs.loop_tag_input ]]"
@@ -27,20 +30,16 @@ cache:
   paths:
     - .m2/repository
 
-before_script:
-  # Linux ortamında Maven Wrapper'a çalıştırma izni veriyoruz (Permission Denied hatasını önler)
-  - chmod +x ./mvnw
-
 compile_project:
   stage: build
   script:
-    # Linux uyumlu Maven Wrapper komutu
-    - ./mvnw clean compile
+    # Saf Linux ortamında doğrudan Maven derlemesi
+    - mvn clean compile
 
 code_quality:
   stage: quality
   script:
-    - ./mvnw checkstyle:check || echo "Stil hatasi"
+    - mvn checkstyle:check || echo "Stil hatasi"
   allow_failure: true
 
 pos_automation_tests:
@@ -50,23 +49,23 @@ pos_automation_tests:
   script:
     - echo "=== DOCKER ICINDE TEST KOSUL SURECI BASLIYOR ==="
     - |
-      # Tamamen Linux Bash standartlarında koşum blokları
+      # Saf Linux Bash koşul blokları ve doğrudan mvn kullanımı
       if [ -n "$SINGLE_TAG" ]; then
           echo "🚀 SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
-          ./mvnw test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
+          mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
       fi
 
       if [ -n "$LOOP_TAG" ]; then
           echo "🔄 LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
           for i in {1..1000}; do
               echo "---------------- DONGU NO: $i / 1000 ----------------"
-              ./mvnw test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
+              mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
           done
       fi
 
       if [ -z "$SINGLE_TAG" ] && [ -z "$LOOP_TAG" ]; then
           echo "⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor..."
-          ./mvnw test -Dappium.url=$APPIUM_URL
+          mvn test -Dappium.url=$APPIUM_URL
       fi
   allow_failure: true
   artifacts:
@@ -81,7 +80,7 @@ pos_automation_tests:
 build_package:
   stage: package
   script:
-    - ./mvnw package -DskipTests
+    - mvn package -DskipTests
 
 pages:
   stage: deploy
