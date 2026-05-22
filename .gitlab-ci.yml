@@ -17,109 +17,49 @@ variables:
 
 stages:
   - build
-  - quality
   - test
-  - package
-  - deploy
-
-cache:
-  paths:
-    - .m2/repository
 
 compile_project:
   stage: build
   script:
     - mvn clean compile
 
-code_quality:
-  stage: quality
-  script:
-    - mvn checkstyle:check || echo "Stil hatasi"
-  allow_failure: true
-
 pos_automation_tests:
   stage: test
   tags:
     - pos-runner
   before_script:
-    - echo "=== Windows Ortaminda Appium Kontrol Ediliyor ==="
-    # Eski kalıntı Appium süreçleri varsa Windows'ta temizliyoruz (Port çakışmasını önler)
-    - PowerShell -Command "Stop-Process -Name 'node' -Force -ErrorAction SilentlyContinue"
-    # Appium'u Windows arka planında başlatıp logları dosyaya yazıyoruz
-    - echo "🚀 Appium Server Arka Planda Başlatılıyor..."
+    - echo "=== WINDOWS ORTAMINDA ALTYAPI HAZIRLIGI ==="
+    # 1. Eğer arka planda takılı kalmış eski Appium/Node süreçleri varsa temizliyoruz
+    - taskkill /F /IM node.exe /T || echo "Aktif node (Appium) sureci bulunamadi."
+    # 2. Appium sunucusunu arka planda başlatıp tüm logları appium.log dosyasına yazıyoruz
+    - echo "🚀 Appium Sunucusu Arka Planda Baslatiliyor..."
     - start /B appium --log-level debug --log-no-colors > appium.log 2>&1
-    # Appium'un ayağa kalkması için 5 saniye bekleme (Windows uyumlu)
-    - PowerShell -Command "Start-Sleep -Seconds 5"
+    # 3. Sunucunun tamamen uyanması için Windows ping komutuyla 5 saniye bekletiyoruz
+    - ping 127.0.0.1 -n 6 > nul
   script:
-    - echo "Fiziksel POS Test Süreci Başlıyor..."
+    - echo "=== TEST KOSUL SÜRECI BASLIYOR ==="
     
-    # 1️⃣ ADIM: SINGLE_TAG kontrolü (Windows PowerShell mantığıyla)
-    - |
-      PowerShell -Command "
-      if ('$env:SINGLE_TAG' -ne '') {
-          Write-Host '🚀 SINGLE_TAG 1 kez kos-turuluyor -> $env:SINGLE_TAG';
-          mvn test -Dappium.url=$env:APPIUM_URL -Dcucumber.filter.tags='$env:SINGLE_TAG';
-      } else {
-          Write-Host 'ℹ️ SINGLE_TAG bos birakildi, bu adim atlaniyor.';
-      }"
+    # SENARYO 1: Eğer sadece SINGLE_TAG girildiyse (1 kez çalıştırır)
+    - if not "%SINGLE_TAG%"=="" ( echo SINGLE_TAG kosuluyor... && mvn test -Dappium.url=%APPIUM_URL% -Dcucumber.filter.tags="%SINGLE_TAG%" )
 
-    # 2️⃣ ADIM: LOOP_TAG 1000 Kez Döngü kontrolü (Windows PowerShell mantığıyla)
-    - |
-      PowerShell -Command "
-      if ('$env:LOOP_TAG' -ne '') {
-          Write-Host '🔄 LOOP_TAG 1000 kez dongusel teste giriyor -> $env:LOOP_TAG';
-          for ($i=1; $i -le 1000; $i++) {
-              Write-Host '=========================================';
-              Write-Host \"       DONGU KOSUSU: $i / 1000           \";
-              Write-Host '=========================================';
-              mvn test -Dappium.url=$env:APPIUM_URL -Dcucumber.filter.tags='$env:LOOP_TAG';
-          }
-      } else {
-          Write-Host 'ℹ️ LOOP_TAG bos birakildi, dongu testi yapilmayacak.';
-      }"
+    # SENARYO 2: Eğer LOOP_TAG girildiyse (Windows CMD döngüsüyle 1000 kez arka arkaya çalıştırır)
+    - if not "%LOOP_TAG%"=="" ( echo LOOP_TAG 1000 kez donguye giriyor... && for /L %i in (1,1,1000) do ( echo ---------------- DONGU NO: %i ---------------- && mvn test -Dappium.url=%APPIUM_URL% -Dcucumber.filter.tags="%LOOP_TAG%" ) )
 
-    # 3️⃣ ADIM: İki input da boşsa tüm testleri çalıştır (Windows PowerShell mantığıyla)
-    - |
-      PowerShell -Command "
-      if ('$env:SINGLE_TAG' -eq '' -and '$env:LOOP_TAG' -eq '') {
-          Write-Host '⚠️ Herhangi bir ozel dongu inputu girilmedi. Tum testler sirasiyla kos-turuluyor...';
-          mvn test -Dappium.url=$env:APPIUM_URL;
-      }"
+    # SENARYO 3: Eğer her iki input alanı da boş bırakıldıysa (Tüm testleri sırayla koşar)
+    - if "%SINGLE_TAG%"=="" if "%LOOP_TAG%"=="" ( echo Ozel tag girilmedi, tum testler sirasiyla kosuluyor... && mvn test -Dappium.url=%APPIUM_URL% )
+
   after_script:
-    # Test bitiminde ne olursa olsun oluşan log dosyasını ekrana basıyoruz
-    - echo "=== APPIUM LOGLARI ==="
-    - PowerShell -Command "if (Test-Path appium.log) { Get-Content appium.log -Tail 50 } else { Write-Host 'Appium log dosyasi bulunamadi.' }"
+    # Testler geçse de kalsa da üretilen son 100 satırlık Appium logunu GitLab paneline basar
+    - echo "=== CRITIC APPIUM LOGS ==="
+    - if exist appium.log ( powershell -Command "Get-Content appium.log -Tail 100" ) else ( echo Appium log dosyasi olusturulamadi! )
   allow_failure: true
   artifacts:
     when: always
     paths:
       - target/surefire-reports/
-      - target/allure-results/
       - appium.log
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
-
-build_package:
-  stage: package
-  script:
-    - mvn package -DskipTests
-
-pages:
-  stage: deploy
-  image: frankescobar/allure-docker-service
-  script:
-    - allure generate target/allure-results -o public --clean
-  artifacts:
-    paths:
-      - public
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-
-deployment_status:
-  stage: deploy
-  script:
-    - echo "Pipeline ve Raporlama Bitti"
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
     
