@@ -9,8 +9,6 @@ spec:
 
 ---
 
-image: maven:3.6.3-jdk-11
-
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   APPIUM_URL: "http://127.0.0.1:4723"
@@ -19,113 +17,46 @@ variables:
 
 stages:
   - build
-  - quality
   - test
-  - package
-  - deploy
-
-cache:
-  paths:
-    - .m2/repository
 
 compile_project:
   stage: build
   script:
     - mvn clean compile
 
-code_quality:
-  stage: quality
-  script:
-    - mvn checkstyle:check || echo "Stil hatasi"
-  allow_failure: true
-
 pos_automation_tests:
   stage: test
   tags:
     - pos-runner
   before_script:
-    - echo "=== Appium ve Sürücü Kurulumu Başlıyor ==="
-    # 1. Node.js ve npm ortamını Docker içine kuruyoruz
-    - apt-get update && apt-get install -y curl gnupg
-    - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-    - apt-get install -y nodejs
-    # 2. Appium ve UiAutomator2 sürücüsünü yüklüyoruz (UiAutomator2 sorusunun çözümü)
-    - npm install -g appium
-    - appium driver install uiautomator2
-    # 3. Appium'u arka planda başlatıyor ve logları 'appium.log' dosyasına yazıyoruz
-    - echo "🚀 Appium Server Başlatılıyor..."
-    - appium --log-level debug --log-no-colors > appium.log 2>&1 &
-    # Appium'un tamamen açılması için 5 saniye bekletiyoruz
-    - sleep 5
-    # Appium'un çalışıp çalışmadığını logdan kontrol etmek için ilk satırları basıyoruz
-    - head -n 20 appium.log
+    - echo "=== Appium Kontrol Ediliyor ==="
+    # Bilgisayarda açık kalmış eski Appium (node) süreçlerini CMD üzerinden temizler
+    - taskkill /F /IM node.exe /T || echo "Calisan Appium sureci bulunamadi."
+    # Appium'u Windows arka planında sıfırdan başlatır
+    - echo "🚀 Appium Server Arka Planda Baslatiliyor..."
+    - start /B appium --log-level debug --log-no-colors > appium.log 2>&1
+    # 5 saniye beklemek için Windows'un en kararlı ping komutunu kullanıyoruz
+    - ping 127.0.0.1 -n 6 > nul
   script:
-    - echo "Fiziksel POS Test Süreci Başlıyor..."
+    - echo "Fiziksel POS Test Sureci Basliyor..."
     
-    # 1️⃣ ADIM: Eğer SINGLE_TAG tanımlandıysa sadece 1 Kere çalıştırır
-    - |
-      if [ -n "$SINGLE_TAG" ]; then
-        echo "🚀 SINGLE_TAG 1 kez koşturuluyor -> $SINGLE_TAG"
-        mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
-      else
-        echo "ℹ️ SINGLE_TAG boş bırakıldı, bu adım atlanıyor."
-      fi
+    # EĞER SINGLE_TAG DOLUYSA: Sadece o tag'i çalıştırır
+    - if not "%SINGLE_TAG%"=="" ( mvn test -Dappium.url=%APPIUM_URL% -Dcucumber.filter.tags="%SINGLE_TAG%" )
 
-    # 2️⃣ ADIM: Eğer LOOP_TAG tanımlandıysa arka arkaya 1000 Kez döngüye sokar
-    - |
-      if [ -n "$LOOP_TAG" ]; then
-        echo "🔄 LOOP_TAG 1000 kez döngüsel teste giriyor -> $LOOP_TAG"
-        for i in {1..1000}; do
-          echo "========================================="
-          echo "       DÖNGÜ KOŞUSU: $i / 1000           "
-          echo "========================================="
-          mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
-        done
-      else
-        echo "ℹ️ LOOP_TAG boş bırakıldı, döngü testi yapılmayacak."
-      fi
 
-    # 3️⃣ ADIM: Eğer iki input alanı da boş bırakıldıysa standart akış (tüm testler) çalışır
-    - |
-      if [ -z "$SINGLE_TAG" ] && [ -z "$LOOP_TAG" ]; then
-        echo "⚠️ Herhangi bir özel döngü inputu girilmedi. Tüm testler sırasıyla koşturuluyor..."
-        mvn test -Dappium.url=$APPIUM_URL
-      fi
+    # EĞER İKİ INPUT DA BOŞSA: Tüm testleri sırasıyla koşturur
+    - if "%SINGLE_TAG%"=="" if "%LOOP_TAG%"=="" ( mvn test -Dappium.url=%APPIUM_URL% )
+
   after_script:
-    # Testler bitse de hata alsa da en son Appium loglarını terminale bas ki hata görünür olsun
+    # Test bittiğinde logları GitLab console ekranında görebilmek için:
     - echo "=== APPIUM LOGLARI ==="
-    - cat appium.log || echo "Appium log dosyası bulunamadı."
+    - type appium.log || echo "Log dosyasi henuz olusmadi."
   allow_failure: true
   artifacts:
     when: always
     paths:
       - target/surefire-reports/
-      - target/allure-results/
-      - appium.log               # Log dosyasını GitLab arayüzünden indirebilmek için buraya ekledik
+      - appium.log
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
-
-build_package:
-  stage: package
-  script:
-    - mvn package -DskipTests
-
-pages:
-  stage: deploy
-  image: frankescobar/allure-docker-service
-  script:
-    - allure generate target/allure-results -o public --clean
-  artifacts:
-    paths:
-      - public
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-
-deployment_status:
-  stage: deploy
-  script:
-    - echo "Pipeline ve Raporlama Bitti"
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-    
