@@ -22,8 +22,8 @@ stages:
 compile_project:
   stage: build
   script:
-    # Git Bash'in Windows Maven'ı tanıyabilmesi için sonuna .cmd ekledik
-    - mvn.cmd clean compile
+    # Bilgisayardaki Maven yerine projenin içindeki gömülü Maven'ı (mvnw.cmd) çağırıyoruz
+    - ./mvnw.cmd clean compile
 
 pos_automation_tests:
   stage: test
@@ -31,29 +31,28 @@ pos_automation_tests:
     - pos-runner
   before_script:
     - echo "=== WINDOWS/BASH ORTAMINDA ALTYAPI HAZIRLIGI ==="
-    # 1. Arka planda kalmış eski Appium/Node süreçlerini temizler (Windows uyumlu)
+    # Arka planda kalmış eski Appium/Node süreçlerini temizler
     - taskkill //F //IM node.exe //T || echo "Aktif node (Appium) sureci bulunamadi."
-    # 2. Appium sunucusunu arka planda başlatıp tüm logları appium.log dosyasına yazar
+    # Appium sunucusunu arka planda başlatıp tüm logları appium.log dosyasına yazar
     - echo "🚀 Appium Sunucusu Arka Planda Baslatiliyor..."
     - start appium --log-level debug --log-no-colors > appium.log 2>&1
-    # 3. Sunucunun açılması için 5 saniye bekletir
     - sleep 5
   script:
     - echo "=== TEST KOSUL SURECI BASLIYOR ==="
     - |
-      # Git Bash (Linux shell) mantığıyla koşul blokları
+      # ./mvnw.cmd kullanarak testleri tetikliyoruz
       if [ -n "$SINGLE_TAG" ]; then
           echo "🚀 SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
-          mvn.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
+          ./mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
       elif [ -n "$LOOP_TAG" ]; then
           echo "🔄 LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
           for i in {1..1000}; do
               echo "---------------- DONGU NO: $i / 1000 ----------------"
-              mvn.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
+              ./mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
           done
       else
           echo "⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor..."
-          mvn.cmd test -Dappium.url=$APPIUM_URL
+          ./mvnw.cmd test -Dappium.url=$APPIUM_URL
       fi
   after_script:
     # Testler geçse de kalsa da üretilen son 100 satırlık Appium logunu GitLab paneline basar
