@@ -29,6 +29,14 @@ public class TestHooks {
         logcatStarted = false;
     }
 
+    @Before(order = 0)
+    public void ensureSampleSale() throws Exception {
+        if (ReusableMethods.driver == null) return;
+        String currentPkg = ReusableMethods.driver.getCurrentPackage();
+        if (!"com.pax.samplesalea".equals(currentPkg)) {
+            PageContext.setUp();        }
+    }
+
     @BeforeStep
     public void beforeStep(Scenario scenario) {
 

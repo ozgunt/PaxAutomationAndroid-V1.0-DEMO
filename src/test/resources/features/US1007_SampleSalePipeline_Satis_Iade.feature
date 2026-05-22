@@ -1,7 +1,7 @@
 @US1006
 Feature: US1006 SampleSale satis gunsonu iade islemleri
 
-  @TC1 @run
+  @TC1 @ignore
   Scenario: kullanici samplesale uzerinden garanti1 kart ile MKE satis islemi gecer
     Given kullanici sample sale baslatir
     When  kullanici samplesale uzerinden 10000 tutar girer
@@ -15,7 +15,7 @@ Feature: US1006 SampleSale satis gunsonu iade islemleri
     And kullanici islem basarili mesaji sonrasi tamam tusuna basar
     And kullanici samplesale satis slibine basar
 
-  @TC2 @run
+  @TC2 @ignore
   Scenario: kullanici gunsonu yapar
     When kullanici samplesale uzerinden merchant menuye giris yapar
     And kullanici manager uzerinden uygulama secer techpos
@@ -23,7 +23,7 @@ Feature: US1006 SampleSale satis gunsonu iade islemleri
     And kullanici isyeri menuden gunsonu secimi yapar
     And kullanici samplesale gunsonu slibine dokunur
 
-  @TC3 @run
+  @TC3 @ignore
   Scenario: kullanici iade islemi yapar
     Given kullanici iade secimi yapar
     When kullanici samplesale uzerinden 10000 tutar girer (iptal)

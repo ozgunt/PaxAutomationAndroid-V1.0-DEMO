@@ -7,7 +7,7 @@ cd /d "%~dp0"
 
 rem ===== MAVEN KOMUTU =====
 rem Burayı kendi makinene göre ayarladın: dokunmuyorum
-set "MVN_EXE=%~dp0tools\apache-maven-3.9.12\bin\mvn.cmd"
+set "MVN_EXE=C:\Program Files\JetBrains\IntelliJ IDEA 2025.3\plugins\maven\lib\maven3\bin\mvn.cmd"
 rem Eger wrapper kullanacaksan:
 rem set "MVN_EXE=%~dp0mvnw.cmd"
 
@@ -17,7 +17,7 @@ if not exist "%MVN_EXE%" (
 )
 
 rem KAC KEZ TEKRAR EDECEK
-set "ITER=100"
+set "ITER=1000"
 
 rem Log klasoru
 mkdir "logs\pipeline" 2>nul
@@ -39,7 +39,7 @@ for /L %%i in (1,1,%ITER%) do (
 
     echo.
     echo [%date% !time!] ##########################################################
-    echo [%date% !time!] ITERATION %%i : @run senaryolari calisiyor
+    echo [%date% !time!] ITERATION %%i : @runepipeline senaryolari calisiyor
     echo [%date% !time!] ##########################################################
     echo ---------------------------------------------------------->> "logs\pipeline\summary.log"
     echo ITERATION %%i basladi>> "logs\pipeline\summary.log"
@@ -47,7 +47,7 @@ for /L %%i in (1,1,%ITER%) do (
     rem === MAVEN CIKTISI: CANLI KONSOL + DOSYA (TEE) ===
     rem  -> adimlar ANLIK konsola akar
     rem  -> ayni anda !LOGFILE! icine yazilir
-    powershell -Command " & '%MVN_EXE%' '-Dtest=Runner' '-Dcucumber.filter.tags=@PipeLineRun' '-Dcucumber.plugin=pretty' test 2>&1 | Tee-Object -FilePath '!LOGFILE!'; exit $LASTEXITCODE"
+    powershell -Command " & '%MVN_EXE%' '-Dtest=Runner' '-Dcucumber.filter.tags=@runepipeline' '-Dcucumber.plugin=pretty' test 2>&1 | Tee-Object -FilePath '!LOGFILE!'; exit $LASTEXITCODE"
     set "EXIT_CODE=!ERRORLEVEL!"
 
     if !EXIT_CODE! NEQ 0 (
