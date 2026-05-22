@@ -22,8 +22,8 @@ stages:
 compile_project:
   stage: build
   script:
-    # Bilgisayardaki Maven yerine projenin içindeki gömülü Maven'ı (mvnw.cmd) çağırıyoruz
-    - ./mvnw.cmd clean compile
+    # Git Bash'in yetki hatası vermemesi için cmd //c wrapper'ını kullanıyoruz
+    - cmd //c mvnw.cmd clean compile
 
 pos_automation_tests:
   stage: test
@@ -40,19 +40,19 @@ pos_automation_tests:
   script:
     - echo "=== TEST KOSUL SURECI BASLIYOR ==="
     - |
-      # ./mvnw.cmd kullanarak testleri tetikliyoruz
+      # cmd //c yardımıyla Maven Wrapper testleri tetikleniyor
       if [ -n "$SINGLE_TAG" ]; then
           echo "🚀 SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
-          ./mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
+          cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
       elif [ -n "$LOOP_TAG" ]; then
           echo "🔄 LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
           for i in {1..1000}; do
               echo "---------------- DONGU NO: $i / 1000 ----------------"
-              ./mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
+              cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
           done
       else
           echo "⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor..."
-          ./mvnw.cmd test -Dappium.url=$APPIUM_URL
+          cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL
       fi
   after_script:
     # Testler geçse de kalsa da üretilen son 100 satırlık Appium logunu GitLab paneline basar
