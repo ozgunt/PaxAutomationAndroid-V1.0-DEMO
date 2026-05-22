@@ -17,13 +17,26 @@ variables:
 
 stages:
   - build
+  - quality
   - test
+  - package
+  - deploy
+
+cache:
+  paths:
+    - .m2/repository
 
 compile_project:
   stage: build
   script:
-    # Git Bash'in yetki hatası vermemesi için cmd //c wrapper'ını kullanıyoruz
+    # Git Bash'in Windows'ta Maven yetki hatası (Permission Denied) vermemesi için düzeltildi
     - cmd //c mvnw.cmd clean compile
+
+code_quality:
+  stage: quality
+  script:
+    - cmd //c mvnw.cmd checkstyle:check || echo "Stil hatasi"
+  allow_failure: true
 
 pos_automation_tests:
   stage: test
@@ -31,7 +44,7 @@ pos_automation_tests:
     - pos-runner
   before_script:
     - echo "=== WINDOWS/BASH ORTAMINDA ALTYAPI HAZIRLIGI ==="
-    # Arka planda kalmış eski Appium/Node süreçlerini temizler
+    # Arka planda kalmış eski Appium/Node süreçlerini temizler (Bash uyumlu kaçış karakterleriyle)
     - taskkill //F //IM node.exe //T || echo "Aktif node (Appium) sureci bulunamadi."
     # Appium sunucusunu arka planda başlatıp tüm logları appium.log dosyasına yazar
     - echo "🚀 Appium Sunucusu Arka Planda Baslatiliyor..."
@@ -40,17 +53,21 @@ pos_automation_tests:
   script:
     - echo "=== TEST KOSUL SURECI BASLIYOR ==="
     - |
-      # cmd //c yardımıyla Maven Wrapper testleri tetikleniyor
+      # Saf Bash mantığıyla çalışan, YAML syntax'ını bozmayan temiz koşul blokları
       if [ -n "$SINGLE_TAG" ]; then
           echo "🚀 SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
           cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
-      elif [ -n "$LOOP_TAG" ]; then
+      fi
+
+      if [ -n "$LOOP_TAG" ]; then
           echo "🔄 LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
           for i in {1..1000}; do
               echo "---------------- DONGU NO: $i / 1000 ----------------"
               cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
           done
-      else
+      fi
+
+      if [ -z "$SINGLE_TAG" ] && [ -z "$LOOP_TAG" ]; then
           echo "⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor..."
           cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL
       fi
@@ -63,7 +80,32 @@ pos_automation_tests:
     when: always
     paths:
       - target/surefire-reports/
+      - target/allure-results/
       - appium.log
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
+
+build_package:
+  stage: package
+  script:
+    - cmd //c mvnw.cmd package -DskipTests
+
+# ✅ Allure Raporunu oluşturan ve GitLab Pages'e gönderen kısım
+pages:
+  stage: deploy
+  image: frankescobar/allure-docker-service
+  script:
+    - allure generate target/allure-results -o public --clean
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+deployment_status:
+  stage: deploy
+  script:
+    - echo "Pipeline ve Raporlama Bitti"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
