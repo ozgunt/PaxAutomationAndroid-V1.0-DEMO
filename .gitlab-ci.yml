@@ -1,4 +1,4 @@
- spec:
+spec:
   inputs:
     single_tag_input:
       default: ""
@@ -9,93 +9,64 @@
 
 ---
 
-# 🚨 DOCKER KONTEYNERİNE MAVEN VE JAVA ALTYAPISINI ZORLA YÜKLÜYORUZ
-image: maven:3.6.3-jdk-11
-
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  # 🚨 Docker içinden kendi bilgisayarınızdaki (Host) Appium'a bağlanma adresi
-  APPIUM_URL: "http://host.docker.internal:4723"
+  APPIUM_URL: "http://127.0.0.1:4723"
   SINGLE_TAG: "$[[ inputs.single_tag_input ]]"
   LOOP_TAG: "$[[ inputs.loop_tag_input ]]"
 
 stages:
   - build
-  - quality
   - test
-  - package
-  - deploy
-
-cache:
-  paths:
-    - .m2/repository
 
 compile_project:
   stage: build
   script:
-    # Saf Linux ortamında doğrudan Maven derlemesi
-    - mvn clean compile
-
-code_quality:
-  stage: quality
-  script:
-    - mvn checkstyle:check || echo "Stil hatasi"
-  allow_failure: true
+    # Windows PowerShell üzerinde projenin içindeki gömülü Maven Wrapper'ı çalıştırıyoruz
+    - PowerShell -Command "./mvnw.cmd clean compile"
 
 pos_automation_tests:
   stage: test
   tags:
     - pos-runner
+  before_script:
+    - echo "=== WINDOWS ORTAMINDA APPIUM HAZIRLIGI ==="
+    # Arka planda kalmış eski Appium/Node süreçleri varsa temizler
+    - PowerShell -Command "Stop-Process -Name 'node' -Force -ErrorAction SilentlyContinue"
+    # Appium'u arka planda başlatıp logları dosyaya yazar
+    - echo "🚀 Appium Sunucusu Arka Planda Baslatiliyor..."
+    - Start-Process cmd -ArgumentList '/c appium --log-level debug --log-no-colors > appium.log 2>&1' -WindowStyle Hidden
+    # Sunucunun açılması için 5 saniye bekletir
+    - PowerShell -Command "Start-Sleep -Seconds 5"
   script:
-    - echo "=== DOCKER ICINDE TEST KOSUL SURECI BASLIYOR ==="
+    - echo "=== TEST KOSUL SURECI BASLIYOR ==="
     - |
-      # Saf Linux Bash koşul blokları ve doğrudan mvn kullanımı
-      if [ -n "$SINGLE_TAG" ]; then
-          echo "🚀 SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
-          mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
-      fi
-
-      if [ -n "$LOOP_TAG" ]; then
-          echo "🔄 LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
-          for i in {1..1000}; do
-              echo "---------------- DONGU NO: $i / 1000 ----------------"
-              mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
-          done
-      fi
-
-      if [ -z "$SINGLE_TAG" ] && [ -z "$LOOP_TAG" ]; then
-          echo "⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor..."
-          mvn test -Dappium.url=$APPIUM_URL
-      fi
+      PowerShell -Command "
+      if ('$env:SINGLE_TAG' -ne '') {
+          Write-Host '🚀 SINGLE_TAG 1 kez kosuluyor -> ' $env:SINGLE_TAG;
+          ./mvnw.cmd test -Dappium.url=$env:APPIUM_URL -Dcucumber.filter.tags=$env:SINGLE_TAG;
+      }
+      elseif ('$env:LOOP_TAG' -ne '') {
+          Write-Host '🔄 LOOP_TAG 1000 kez donguye giriyor -> ' $env:LOOP_TAG;
+          for ($i=1; $i -le 1000; $i++) {
+              Write-Host \"---------------- DONGU NO: $i / 1000 ----------------\";
+              ./mvnw.cmd test -Dappium.url=$env:APPIUM_URL -Dcucumber.filter.tags=$env:LOOP_TAG;
+          }
+      }
+      else {
+          Write-Host '⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor...';
+          ./mvnw.cmd test -Dappium.url=$env:APPIUM_URL;
+      }"
+  after_script:
+    # Testler bitince oluşan son 50 satırlık Appium logunu panele basar
+    - echo "=== APPIUM LOGLARI ==="
+    - PowerShell -Command "if (Test-Path appium.log) { Get-Content appium.log -Tail 50 } else { Write-Host 'Appium log dosyasi olusturulamadi!' }"
   allow_failure: true
   artifacts:
     when: always
     paths:
       - target/surefire-reports/
-      - target/allure-results/
+      - appium.log
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
-
-build_package:
-  stage: package
-  script:
-    - mvn package -DskipTests
-
-pages:
-  stage: deploy
-  image: frankescobar/allure-docker-service
-  script:
-    - allure generate target/allure-results -o public --clean
-  artifacts:
-    paths:
-      - public
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-
-deployment_status:
-  stage: deploy
-  script:
-    - echo "Pipeline ve Raporlama Bitti"
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
