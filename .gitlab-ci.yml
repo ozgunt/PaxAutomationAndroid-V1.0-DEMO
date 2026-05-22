@@ -17,46 +17,108 @@ variables:
 
 stages:
   - build
+  - quality
   - test
+  - package
+  - deploy
+
+cache:
+  paths:
+    - .m2/repository
 
 compile_project:
   stage: build
   script:
     - mvn clean compile
 
+code_quality:
+  stage: quality
+  script:
+    - mvn checkstyle:check || echo "Stil hatasi"
+  allow_failure: true
+
 pos_automation_tests:
   stage: test
   tags:
     - pos-runner
   before_script:
-    - echo "=== Appium Kontrol Ediliyor ==="
-    # Bilgisayarda açık kalmış eski Appium (node) süreçlerini CMD üzerinden temizler
-    - taskkill /F /IM node.exe /T || echo "Calisan Appium sureci bulunamadi."
-    # Appium'u Windows arka planında sıfırdan başlatır
-    - echo "🚀 Appium Server Arka Planda Baslatiliyor..."
+    - echo "=== Windows Ortaminda Appium Kontrol Ediliyor ==="
+    # Eski kalıntı Appium süreçleri varsa Windows'ta temizliyoruz (Port çakışmasını önler)
+    - PowerShell -Command "Stop-Process -Name 'node' -Force -ErrorAction SilentlyContinue"
+    # Appium'u Windows arka planında başlatıp logları dosyaya yazıyoruz
+    - echo "🚀 Appium Server Arka Planda Başlatılıyor..."
     - start /B appium --log-level debug --log-no-colors > appium.log 2>&1
-    # 5 saniye beklemek için Windows'un en kararlı ping komutunu kullanıyoruz
-    - ping 127.0.0.1 -n 6 > nul
+    # Appium'un ayağa kalkması için 5 saniye bekleme (Windows uyumlu)
+    - PowerShell -Command "Start-Sleep -Seconds 5"
   script:
-    - echo "Fiziksel POS Test Sureci Basliyor..."
+    - echo "Fiziksel POS Test Süreci Başlıyor..."
     
-    # EĞER SINGLE_TAG DOLUYSA: Sadece o tag'i çalıştırır
-    - if not "%SINGLE_TAG%"=="" ( mvn test -Dappium.url=%APPIUM_URL% -Dcucumber.filter.tags="%SINGLE_TAG%" )
+    # 1️⃣ ADIM: SINGLE_TAG kontrolü (Windows PowerShell mantığıyla)
+    - |
+      PowerShell -Command "
+      if ('$env:SINGLE_TAG' -ne '') {
+          Write-Host '🚀 SINGLE_TAG 1 kez kos-turuluyor -> $env:SINGLE_TAG';
+          mvn test -Dappium.url=$env:APPIUM_URL -Dcucumber.filter.tags='$env:SINGLE_TAG';
+      } else {
+          Write-Host 'ℹ️ SINGLE_TAG bos birakildi, bu adim atlaniyor.';
+      }"
 
+    # 2️⃣ ADIM: LOOP_TAG 1000 Kez Döngü kontrolü (Windows PowerShell mantığıyla)
+    - |
+      PowerShell -Command "
+      if ('$env:LOOP_TAG' -ne '') {
+          Write-Host '🔄 LOOP_TAG 1000 kez dongusel teste giriyor -> $env:LOOP_TAG';
+          for ($i=1; $i -le 1000; $i++) {
+              Write-Host '=========================================';
+              Write-Host \"       DONGU KOSUSU: $i / 1000           \";
+              Write-Host '=========================================';
+              mvn test -Dappium.url=$env:APPIUM_URL -Dcucumber.filter.tags='$env:LOOP_TAG';
+          }
+      } else {
+          Write-Host 'ℹ️ LOOP_TAG bos birakildi, dongu testi yapilmayacak.';
+      }"
 
-    # EĞER İKİ INPUT DA BOŞSA: Tüm testleri sırasıyla koşturur
-    - if "%SINGLE_TAG%"=="" if "%LOOP_TAG%"=="" ( mvn test -Dappium.url=%APPIUM_URL% )
-
+    # 3️⃣ ADIM: İki input da boşsa tüm testleri çalıştır (Windows PowerShell mantığıyla)
+    - |
+      PowerShell -Command "
+      if ('$env:SINGLE_TAG' -eq '' -and '$env:LOOP_TAG' -eq '') {
+          Write-Host '⚠️ Herhangi bir ozel dongu inputu girilmedi. Tum testler sirasiyla kos-turuluyor...';
+          mvn test -Dappium.url=$env:APPIUM_URL;
+      }"
   after_script:
-    # Test bittiğinde logları GitLab console ekranında görebilmek için:
+    # Test bitiminde ne olursa olsun oluşan log dosyasını ekrana basıyoruz
     - echo "=== APPIUM LOGLARI ==="
-    - type appium.log || echo "Log dosyasi henuz olusmadi."
+    - PowerShell -Command "if (Test-Path appium.log) { Get-Content appium.log -Tail 50 } else { Write-Host 'Appium log dosyasi bulunamadi.' }"
   allow_failure: true
   artifacts:
     when: always
     paths:
       - target/surefire-reports/
+      - target/allure-results/
       - appium.log
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
+
+build_package:
+  stage: package
+  script:
+    - mvn package -DskipTests
+
+pages:
+  stage: deploy
+  image: frankescobar/allure-docker-service
+  script:
+    - allure generate target/allure-results -o public --clean
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+deployment_status:
+  stage: deploy
+  script:
+    - echo "Pipeline ve Raporlama Bitti"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
