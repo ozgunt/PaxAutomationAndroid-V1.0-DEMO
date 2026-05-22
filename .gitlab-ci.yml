@@ -11,7 +11,8 @@ spec:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  APPIUM_URL: "http://127.0.0.1:4723"
+  # 🚨 DOCKER İÇİNDEN KENDİ BİLGİSAYARINIZDAKİ (HOST) APPIUM'A BAĞLANMAK İÇİN IP'Yİ GÜNCELLEDİK:
+  APPIUM_URL: "http://host.docker.internal:4723"
   SINGLE_TAG: "$[[ inputs.single_tag_input ]]"
   LOOP_TAG: "$[[ inputs.loop_tag_input ]]"
 
@@ -26,62 +27,53 @@ cache:
   paths:
     - .m2/repository
 
+before_script:
+  # Linux ortamında Maven Wrapper'a çalıştırma izni veriyoruz (Permission Denied hatasını önler)
+  - chmod +x ./mvnw
+
 compile_project:
   stage: build
   script:
-    # Git Bash'in Windows'ta Maven yetki hatası (Permission Denied) vermemesi için düzeltildi
-    - cmd //c mvnw.cmd clean compile
+    # Linux uyumlu Maven Wrapper komutu
+    - ./mvnw clean compile
 
 code_quality:
   stage: quality
   script:
-    - cmd //c mvnw.cmd checkstyle:check || echo "Stil hatasi"
+    - ./mvnw checkstyle:check || echo "Stil hatasi"
   allow_failure: true
 
 pos_automation_tests:
   stage: test
   tags:
     - pos-runner
-  before_script:
-    - echo "=== WINDOWS/BASH ORTAMINDA ALTYAPI HAZIRLIGI ==="
-    # Arka planda kalmış eski Appium/Node süreçlerini temizler (Bash uyumlu kaçış karakterleriyle)
-    - taskkill //F //IM node.exe //T || echo "Aktif node (Appium) sureci bulunamadi."
-    # Appium sunucusunu arka planda başlatıp tüm logları appium.log dosyasına yazar
-    - echo "🚀 Appium Sunucusu Arka Planda Baslatiliyor..."
-    - start appium --log-level debug --log-no-colors > appium.log 2>&1
-    - sleep 5
   script:
-    - echo "=== TEST KOSUL SURECI BASLIYOR ==="
+    - echo "=== DOCKER ICINDE TEST KOSUL SURECI BASLIYOR ==="
     - |
-      # Saf Bash mantığıyla çalışan, YAML syntax'ını bozmayan temiz koşul blokları
+      # Tamamen Linux Bash standartlarında koşum blokları
       if [ -n "$SINGLE_TAG" ]; then
           echo "🚀 SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
-          cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
+          ./mvnw test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
       fi
 
       if [ -n "$LOOP_TAG" ]; then
           echo "🔄 LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
           for i in {1..1000}; do
               echo "---------------- DONGU NO: $i / 1000 ----------------"
-              cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
+              ./mvnw test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
           done
       fi
 
       if [ -z "$SINGLE_TAG" ] && [ -z "$LOOP_TAG" ]; then
           echo "⚠️ Ozel tag girilmedi, tum testler sirasiyla kosuluyor..."
-          cmd //c mvnw.cmd test -Dappium.url=$APPIUM_URL
+          ./mvnw test -Dappium.url=$APPIUM_URL
       fi
-  after_script:
-    # Testler geçse de kalsa da üretilen son 100 satırlık Appium logunu GitLab paneline basar
-    - echo "=== CRITIC APPIUM LOGS ==="
-    - if [ -f appium.log ]; then tail -n 100 appium.log; else echo "Appium log dosyasi olusturulamadi!"; fi
   allow_failure: true
   artifacts:
     when: always
     paths:
       - target/surefire-reports/
       - target/allure-results/
-      - appium.log
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
@@ -89,9 +81,8 @@ pos_automation_tests:
 build_package:
   stage: package
   script:
-    - cmd //c mvnw.cmd package -DskipTests
+    - ./mvnw package -DskipTests
 
-# ✅ Allure Raporunu oluşturan ve GitLab Pages'e gönderen kısım
 pages:
   stage: deploy
   image: frankescobar/allure-docker-service
