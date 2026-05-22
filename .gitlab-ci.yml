@@ -1,8 +1,15 @@
+spec:
+  inputs:
+    test_filter_input:
+      default: ""
+      description: "Çalıştırmak istediğiniz test metodunu veya Cucumber tag'ini girin. (Örn: @SmokeTest veya PaymentTests#testSale) Boş bırakılırsa tüm testler koşar."
+---
 image: maven:3.6.3-jdk-11
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   APPIUM_URL: "http://127.0.0.1:4723/wd/hub"
+  TEST_FILTER: "$[[ inputs.test_filter_input ]]"
 
 stages:
   - build
@@ -31,15 +38,18 @@ pos_automation_tests:
   tags:
     - pos-runner
   script:
+    - echo "Fiziksel POS Bağlantısı Kontrol Ediliyor..."
+    - adb devices || echo "adb komutu veya bağlı cihaz bulunamadı, adımlara devam ediliyor..."
     - echo "Test Filtresi Kontrol Ediliyor -> $TEST_FILTER"
     - |
       if [ -z "$TEST_FILTER" ]; then
+        echo "Herhangi bir filtre algılanmadı, tüm testler koşturuluyor..."
         mvn test -Dappium.url=$APPIUM_URL
       elif [[ "$TEST_FILTER" == @* ]]; then
-        echo "Cucumber Tagi Algılandı!"
+        echo "Cucumber Tagi Algılandı! Koşturulacak Tag -> $TEST_FILTER"
         mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$TEST_FILTER"
       else
-        echo "Standart Java Test/Metot Filtresi Algılandı!"
+        echo "Standart Java Test/Metot Filtresi Algılandı! Koşturulacak Test -> $TEST_FILTER"
         mvn test -Dappium.url=$APPIUM_URL -Dtest="$TEST_FILTER"
       fi
   allow_failure: true
@@ -57,7 +67,6 @@ build_package:
   script:
     - mvn package -DskipTests
 
-# ✅ Allure Raporunu oluşturan ve GitLab Pages'e gönderen kısım
 pages:
   stage: deploy
   image: frankescobar/allure-docker-service
