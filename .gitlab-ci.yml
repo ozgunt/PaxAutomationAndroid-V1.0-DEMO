@@ -15,7 +15,7 @@ image: maven:3.6.3-jdk-11
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   # 🚨 Docker içinden kendi bilgisayarınızdaki (Host) Appium'a bağlanma adresi
-  APPIUM_URL: "http://host.docker.internal:4723"
+  APPIUM_URL: "http://10.200.60.118:4723"
   SINGLE_TAG: "$[[ inputs.single_tag_input ]]"
   LOOP_TAG: "$[[ inputs.loop_tag_input ]]"
 
@@ -33,7 +33,6 @@ cache:
 compile_project:
   stage: build
   script:
-    # Saf Linux ortamında doğrudan Maven derlemesi
     - mvn clean compile
 
 code_quality:
@@ -46,17 +45,21 @@ pos_automation_tests:
   stage: test
   tags:
     - pos-runner
+  before_script:
+    - apt-get update && apt-get install -y curl netcat-openbsd
+    - echo "=== APPIUM SUNUCUSUNA ERISIM TEST EDILIYOR ==="
+    - curl -I $APPIUM_URL/status || echo "DIKKAT! Appium sunucusuna ulaşılamıyor! IP veya Port hatalı ya da Firewall var."
   script:
     - echo "=== DOCKER ICINDE TEST KOSUL SURECI BASLIYOR ==="
     - |
       # Saf Linux Bash koşul blokları ve doğrudan mvn kullanımı
       if [ -n "$SINGLE_TAG" ]; then
-          echo "🚀 SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
+          echo " SINGLE_TAG 1 kez kosuluyor -> $SINGLE_TAG"
           mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$SINGLE_TAG"
       fi
 
       if [ -n "$LOOP_TAG" ]; then
-          echo "🔄 LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
+          echo "LOOP_TAG 1000 kez donguye giriyor -> $LOOP_TAG"
           for i in {1..1000}; do
               echo "---------------- DONGU NO: $i / 1000 ----------------"
               mvn test -Dappium.url=$APPIUM_URL -Dcucumber.filter.tags="$LOOP_TAG"
