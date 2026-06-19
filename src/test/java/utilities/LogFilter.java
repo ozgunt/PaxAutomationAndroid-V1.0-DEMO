@@ -9,22 +9,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LogFilter {
 
     private static final Logger logger = LoggerUtil.getLogger();
 
-    /**
-     * RAW log dosyasından:
-     *  - crash bloklarını (beginning of crash / FATAL EXCEPTION)
-     *  - Exception satırlarını
-     *  - JSON benzeri satırları
-     * ayrı dosyalara çıkarır.
-     *
-     * Ek olarak:
-     *  - RAW log içinden EN SON geçen Slip JSON'u (mercSlipName içeren) yakalar
-     *  - Configuration.properties içine sonIslem* alanlarını yazar
-     */
     public static void processRawLog(String rawPath, String scenarioName, boolean failed) {
         if (rawPath == null || rawPath.isEmpty()) {
             logger.warn("LogFilter: rawPath boş, işlem yapılmadı.");
@@ -38,13 +29,16 @@ public class LogFilter {
         }
 
         try {
-            List<String> lines = Files.readAllLines(rawFile, StandardCharsets.UTF_8);
+            List<String> lines;
+            try (Stream<String> sLines = Files.lines(rawFile, StandardCharsets.UTF_8)) {
+                lines = sLines.collect(Collectors.toList());
+            }
+
             if (lines.isEmpty()) {
                 logger.info("LogFilter: RAW dosya boş, filtrelenecek satır yok.");
                 return;
             }
 
-            // klasörleri hazırla
             Path crashDir     = Paths.get("logs", "crash");
             Path exceptionDir = Paths.get("logs", "exception");
             Path jsonDir      = Paths.get("logs", "jsonSlip");
@@ -64,14 +58,12 @@ public class LogFilter {
             List<String> jsonOut      = new ArrayList<>();
 
             boolean inCrashBlock = false;
-            int crashLinesRemaining = 0; // crash başlangıcından sonra kaç satır daha alalım
+            int crashLinesRemaining = 0;
 
             for (String line : lines) {
-
-                // Crash başlangıcını yakala
                 if (line.contains("beginning of crash") || line.contains("FATAL EXCEPTION")) {
                     inCrashBlock = true;
-                    crashLinesRemaining = 50; // başlangıç + 50 satır context yeter
+                    crashLinesRemaining = 50;
                 }
 
                 if (inCrashBlock) {
@@ -82,34 +74,36 @@ public class LogFilter {
                     }
                 }
 
-                // Genel exception satırları
                 if (line.contains("Exception")) {
                     exceptionOut.add(line);
                 }
 
-                // JSON benzeri satırlar (genel dump)
                 if (line.contains("{") && line.contains("}")) {
                     jsonOut.add(line);
                 }
             }
 
-            // ✅ SON İŞLEM SLIP JSON → Configuration.properties'e yaz
             String lastSlipJson = extractLastSlipJson(lines);
 
-            // ✅ Pipeline/loop'ta slip JSON logu gecikmeli gelebiliyor.
-            // RAW dosyaya düşene kadar bekle (maks 8 sn) ve tekrar oku.
+            // RAM Dostu Akıllı Slip Tarama Döngüsü
             long deadline = System.currentTimeMillis() + 8000;
             while ((lastSlipJson == null || lastSlipJson.isBlank()) && System.currentTimeMillis() < deadline) {
                 try {
-                    Thread.sleep(500); // 0.5 sn bekle
+                    Thread.sleep(1000);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     break;
                 }
 
                 try {
-                    List<String> retryLines = Files.readAllLines(rawFile, StandardCharsets.UTF_8);
-                    lastSlipJson = extractLastSlipJson(retryLines);
+                    if (Files.exists(rawFile)) {
+                        try (Stream<String> streamLines = Files.lines(rawFile, StandardCharsets.UTF_8)) {
+                            List<String> retryLines = streamLines.collect(Collectors.toList());
+                            lastSlipJson = extractLastSlipJson(retryLines);
+                        }
+                    } else {
+                        break;
+                    }
                 } catch (IOException ignore) {
                     break;
                 }
@@ -171,13 +165,10 @@ public class LogFilter {
         }
     }
 
-    // ✅ RAW log içinde en sonda geçen "MainActivity: { ... mercSlipName ... }" satırını yakala
     private static String extractLastSlipJson(List<String> lines) {
-
         for (int i = lines.size() - 1; i >= 0; i--) {
             String line = lines.get(i);
 
-            // En sağlam hedef: direkt slip json satırı
             if (line.contains("MainActivity:") && line.contains("{") && line.contains("}")
                     && line.contains("\"mercSlipName\"")) {
 
@@ -188,7 +179,6 @@ public class LogFilter {
                 }
             }
 
-            // Fallback: "Slip Json:" satırından sonra birkaç satır içinde json olabilir
             if (line.contains("Slip Json:")) {
                 for (int j = i + 1; j < Math.min(i + 6, lines.size()); j++) {
                     String nxt = lines.get(j);
@@ -202,7 +192,6 @@ public class LogFilter {
                 }
             }
         }
-
         return null;
     }
 }

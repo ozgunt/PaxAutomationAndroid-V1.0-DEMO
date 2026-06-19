@@ -8,6 +8,7 @@ import io.cucumber.java.Before;
 import io.cucumber.java.BeforeStep;
 import io.cucumber.java.PendingException;
 import io.cucumber.java.en.*;
+import io.cucumber.java.sl.In;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import org.apache.logging.log4j.core.appender.ScriptAppenderSelector;
@@ -21,9 +22,7 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import pages.PGmanager;
-import pages.PGsampleSale;
-import pages.PGtechPos;
+import pages.*;
 import utilities.ConfigReader;
 import utilities.PageContext;
 import utilities.ReusableMethods;
@@ -47,6 +46,8 @@ public class StepDefinitions {
     PGsampleSale salePage;
     PGmanager manager;
     PGtechPos techPos;
+    PGtosla tosla ;
+    PGodeal odeal;
 
     // Her adım öncesi ReusableMethods'taki güncel referansları local field'lara kopyala
     @BeforeStep
@@ -54,6 +55,7 @@ public class StepDefinitions {
         if (PageContext.sampleSalePage != null) salePage = PageContext.sampleSalePage;
         if (PageContext.managerPage != null) manager = PageContext.managerPage;
         if (PageContext.techPosPage != null) techPos = PageContext.techPosPage;
+        if (PageContext.toslaPage != null) tosla= PageContext.toslaPage;
     }
 
 
@@ -426,21 +428,21 @@ public class StepDefinitions {
 
     }
 
-    @And("kullanici islem basarili mesaji sonrasi tamam tusuna basar")
+    @And("^kullanici islem basarili mesaji sonrasi tamam tusuna basar$")
     public void kullaniciIslemBasariliMesajiSonrasiTamamTusunaBasar() {
-        if (salePage == null) {
-            throw new RuntimeException("techPosPage null. setUp() çağrılmamış veya PGtechPos init olmamış.");
-        }
+        // driver.activateApp satırı Pax cihazlarda crash ve arka plana atma yaptığı için kaldırıldı.
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(15))
+            new WebDriverWait(ReusableMethods.driver, Duration.ofSeconds(10))
                     .until(ExpectedConditions.elementToBeClickable(salePage.btnTamamIslemBasarili))
                     .click();
-            System.out.println("✅ İşlem başarılı popup 'Tamam' tıklandı");
+            System.out.println("✅ Başarılı mesajı sonrası tamam tuşuna basıldı.");
         } catch (Exception e) {
-            System.out.println("ℹ️ İşlem başarılı popup gelmedi → devam ediliyor");
+            try {
+                ReusableMethods.driver.findElement(By.xpath("//android.widget.Button[contains(@text,'TAMAM') or contains(@text,'Tamam') or contains(@text,'OK')]")).click();
+                System.out.println("✅ Alternatif buton ile tamam tuşuna basıldı.");
+            } catch (Exception ignored) {}
         }
     }
-
     @And("Kullanici cihazi kendi serisine kurar")
     public void kullaniciCihaziKendiSerisineKurar() {
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
@@ -1104,4 +1106,69 @@ public class StepDefinitions {
         }
 
     }
+
+    @When("kullanici tosla uzerinden {int} tutar girer")
+    public void kullaniciToslaUzerindenTutarGirer(Integer tutar) throws Exception {
+        // 1. Önce sürücüyü ayağa kaldırıyoruz (Properties dosyasındaki activeApp=Tosla ayarını okur)
+        PageContext.setUp();
+
+        if (PageContext.toslaPage == null) {
+            PageContext.toslaPage = new pages.PGtosla(driver);
+        }
+        tosla = PageContext.toslaPage;
+
+        System.out.println("⏳ Tosla uygulaması başlatıldı, tutar giriliyor: " + tutar);
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(tosla.txtTutar));
+        tosla.txtTutar.sendKeys(String.valueOf(tutar));
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(tosla.btnSatisBaslat)).click();
+
+        System.out.println("✅ Tosla tutarı girildi.");
+    }
+
+    @When("kullanici odeal uzerinden cekim satis baslatir")
+    public void kullaniciOdealUzerindenCekimSatisBaslatir() throws InterruptedException {
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(PageContext.odealPage.yeniIslem)).click();
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(PageContext.odealPage.kalem)).click();
+
+        try {
+            String pageSource = ReusableMethods.driver.getPageSource();
+            java.nio.file.Files.write(java.nio.file.Paths.get("kilitlenme_anindaki_ekran.xml"), pageSource.getBytes());
+        } catch (Exception e) {
+            System.out.println("XML kaydedilemedi: " + e.getMessage());
+        }
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(PageContext.odealPage.tamam)).click();
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(PageContext.odealPage.nihai)).click();
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(PageContext.odealPage.KKode)).click();
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(PageContext.odealPage.hayir)).click();
+    }
+    @And("kullanici tosla uzerinden son islemin iptalini yapar")
+    public void kullaniciToslaUzerindenSonIsleminIptaliniYapar() throws Exception {
+
+        int tutar = 1;
+        PageContext.setUp();
+
+        if (PageContext.toslaPage == null) {
+            PageContext.toslaPage = new pages.PGtosla(driver);
+        }
+        tosla = PageContext.toslaPage;
+
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(tosla.btnIptalIade)).click();
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(tosla.txtReferans)).sendKeys(ConfigReader.getProperty("sonIslemBankaReferansNo"));
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(tosla.txtStan)).sendKeys(ConfigReader.getProperty("sonIslemBankaReferansNo"));
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(tosla.txtTutar)).sendKeys(String.valueOf(tutar));
+        ReusableMethods.iwait().until(ExpectedConditions.visibilityOf(tosla.btnIptalIade)).click();
+        System.out.println("⏳ Tosla uygulaması başlatıldı, tutar giriliyor: " + tutar);
+
+        System.out.println("✅ Tosla tutarı girildi.");
+    }
+
+
+
 }
+
+

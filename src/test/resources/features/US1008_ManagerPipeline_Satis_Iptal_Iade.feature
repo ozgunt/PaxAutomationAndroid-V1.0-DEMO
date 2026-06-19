@@ -4,7 +4,7 @@ Feature: US1008 satis iptal iade islemleri yapilir
   @TC1 @ignore
   Scenario:kullanici samplesale uzerinden halkbank combo kart ile MKE satis islemi gecer
     Given kullanici sample sale baslatir
-    When kullanici samplesale uzerinden 10000 tutar girer
+    When kullanici samplesale uzerinden 1000 tutar girer
     And kullanici samplesale uzerinden satis baslatir
     And kullanici mke secimi yapar
     And kullanici halkbank1 combo KK no girer
