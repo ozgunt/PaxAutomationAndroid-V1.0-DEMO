@@ -1,0 +1,21 @@
+Merhaba,
+
+Projenin herhangi bir şirketle bağlantısı yoktur. Herhangi bir şirket kaynağı kullanılmamış hiçbir şirket sırrı içermemektedir.Kullanılan APK lar projenin içinden çıkartılmıştır.
+
+Demo Amaçları
+ 
+1.Farklı cihazlarda çalıştırılabildiğini göstermek.
+ 
+2.Çoklu APK ile çalışabildiğini göstermek.
+ 
+3.APK’ların birbirini tetiklediği durumlarda Appium tarafında aktif uygulama (package) geçişlerinin yönetilebildiğini göstermek.
+ 
+4.Çoklu test senaryolarının peş peşe çalıştırılabildiğini göstermek.
+ 
+5.Farklı konfigürasyonlarda testlerin koşulabildiğini göstermek (ör. native + TechPOS, sadece TechPOS vb.).
+ 
+6.Uygulamaların sorunsuz bir şekilde kapatılıp yeniden açılabildiğini göstermek.
+ 
+7.Kurulum/parametre  günsonu, MKE, satış işlemlernin gerçekleştirilebildiğini göstermek.
+ 
+8.Hata durumunda logların ve ekran görüntülerinin alınabildiğini göstermek.
